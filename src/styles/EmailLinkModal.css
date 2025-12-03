@@ -1,0 +1,439 @@
+/* Email Link Modal Styles */
+
+.email-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  z-index: 1000;
+  animation: fadeIn 0.2s ease-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.email-modal-card {
+  background: #2a2a2a;
+  border-radius: 16px;
+  padding: 32px;
+  max-width: 420px;
+  width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+  animation: slideUp 0.3s ease-out;
+  position: relative;
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.modal-close-button {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  background: none;
+  border: none;
+  color: #999999;
+  font-size: 20px;
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 50%;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+
+.modal-close-button:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.1);
+  color: #ffffff;
+}
+
+.modal-close-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.email-modal-header {
+  text-align: center;
+  margin-bottom: 24px;
+  position: relative;
+  padding-right: 20px;
+}
+
+.back-button {
+  position: absolute;
+  left: 0;
+  top: 0;
+  background: none;
+  border: none;
+  color: #EFB89E;
+  font-size: 14px;
+  cursor: pointer;
+  padding: 6px;
+  transition: transform 0.2s;
+}
+
+.back-button:hover:not(:disabled) {
+  transform: translateX(-4px);
+}
+
+.back-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.email-modal-title {
+  font-size: 24px;
+  font-weight: 600;
+  color: #ffffff;
+  margin: 0 0 8px 0;
+}
+
+.email-modal-subtitle {
+  font-size: 14px;
+  color: #999999;
+  margin: 0;
+  line-height: 1.4;
+}
+
+.form-group {
+  margin-bottom: 20px;
+}
+
+.form-label {
+  display: block;
+  font-size: 13px;
+  font-weight: 500;
+  color: #ffffff;
+  margin-bottom: 6px;
+}
+
+.email-input {
+  width: 100%;
+  background: #1a1a1a;
+  border: 2px solid #333333;
+  border-radius: 10px;
+  padding: 14px;
+  color: #ffffff;
+  font-size: 15px;
+  transition: all 0.2s;
+  box-sizing: border-box;
+}
+
+.email-input:focus {
+  outline: none;
+  border-color: #EFB89E;
+  background: #222222;
+}
+
+.email-input::placeholder {
+  color: #666666;
+}
+
+.email-input:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.code-input {
+  width: 100%;
+  background: #1a1a1a;
+  border: 2px solid #333333;
+  border-radius: 10px;
+  padding: 16px;
+  color: #ffffff;
+  font-size: 24px;
+  font-weight: 600;
+  text-align: center;
+  letter-spacing: 6px;
+  transition: all 0.2s;
+  box-sizing: border-box;
+  font-family: 'Monaco', 'Courier New', monospace;
+}
+
+.code-input:focus {
+  outline: none;
+  border-color: #EFB89E;
+  background: #222222;
+}
+
+.code-input::placeholder {
+  color: #666666;
+  letter-spacing: 3px;
+}
+
+.code-input:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.input-hint {
+  font-size: 12px;
+  color: #999999;
+  margin: 6px 0 0 0;
+  text-align: center;
+}
+
+.btn {
+  width: 100%;
+  padding: 12px 20px;
+  border-radius: 10px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0;
+  min-height: 44px;
+}
+
+.btn-primary {
+  background: #EFB89E;
+  color: #1a1a1a;
+}
+
+.btn-primary:hover:not(:disabled) {
+  background: #f5c9b3;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(239, 184, 158, 0.3);
+}
+
+.btn-primary:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.btn-link {
+  background: none;
+  border: none;
+  color: #EFB89E;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 6px;
+  transition: all 0.2s;
+}
+
+.btn-link:hover:not(:disabled) {
+  color: #f5c9b3;
+  text-decoration: underline;
+}
+
+.btn-link:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.spinner-small {
+  width: 16px;
+  height: 16px;
+  border: 2.5px solid rgba(26, 26, 26, 0.3);
+  border-top-color: #1a1a1a;
+  border-radius: 50%;
+  animation: spin 0.6s linear infinite;
+  display: inline-block;
+  flex-shrink: 0;
+  margin-right: 6px;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Loading overlay for the entire modal */
+.email-modal-card.loading {
+  pointer-events: none;
+}
+
+/* Enhanced loading state for button */
+.btn-primary:disabled {
+  opacity: 0.95;
+  cursor: not-allowed;
+  background: #d4a68d;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+}
+
+/* Loading button animation */
+.btn-primary.loading {
+  animation: buttonPulse 2s ease-in-out infinite;
+}
+
+@keyframes buttonPulse {
+  0%, 100% {
+    background: #d4a68d;
+  }
+  50% {
+    background: #c99a7d;
+  }
+}
+
+.error-message {
+  background: rgba(255, 107, 107, 0.1);
+  border: 1px solid rgba(255, 107, 107, 0.3);
+  border-radius: 8px;
+  padding: 10px 12px;
+  color: #ff6b6b;
+  font-size: 13px;
+  margin-bottom: 16px;
+  animation: shake 0.3s;
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-6px); }
+  75% { transform: translateX(6px); }
+}
+
+.success-message {
+  background: rgba(81, 207, 102, 0.1);
+  border: 1px solid rgba(81, 207, 102, 0.3);
+  border-radius: 8px;
+  padding: 10px 12px;
+  color: #51cf66;
+  font-size: 13px;
+  margin-bottom: 16px;
+  animation: slideDown 0.3s;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.resend-section {
+  text-align: center;
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid #333333;
+}
+
+.resend-text {
+  font-size: 13px;
+  color: #999999;
+  margin: 0 0 6px 0;
+}
+
+.email-step,
+.code-step {
+  animation: fadeInStep 0.3s ease-out;
+}
+
+@keyframes fadeInStep {
+  from {
+    opacity: 0;
+    transform: translateX(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@media (max-width: 480px) {
+  .email-modal-card {
+    padding: 24px;
+    margin: 10px;
+  }
+
+  .email-modal-title {
+    font-size: 20px;
+  }
+
+  .code-input {
+    font-size: 20px;
+    letter-spacing: 4px;
+    padding: 14px;
+  }
+
+  .btn {
+    padding: 11px 16px;
+    font-size: 14px;
+    min-height: 42px;
+  }
+
+  .spinner-small {
+    width: 15px;
+    height: 15px;
+    border-width: 2.5px;
+  }
+}
+
+@media (max-width: 360px) {
+  .email-modal-card {
+    padding: 20px;
+  }
+
+  .email-modal-title {
+    font-size: 18px;
+  }
+
+  .code-input {
+    font-size: 18px;
+    letter-spacing: 3px;
+  }
+
+  .btn {
+    padding: 10px 14px;
+    font-size: 13px;
+    min-height: 40px;
+  }
+
+  .spinner-small {
+    width: 14px;
+    height: 14px;
+    border-width: 2px;
+  }
+}
+
+.email-modal-card::-webkit-scrollbar {
+  width: 6px;
+}
+
+.email-modal-card::-webkit-scrollbar-track {
+  background: #1a1a1a;
+  border-radius: 3px;
+}
+
+.email-modal-card::-webkit-scrollbar-thumb {
+  background: #333333;
+  border-radius: 3px;
+}
+
+.email-modal-card::-webkit-scrollbar-thumb:hover {
+  background: #444444;
+}

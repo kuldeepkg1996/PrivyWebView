@@ -1,0 +1,595 @@
+.sign-tx-container {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  padding: 0;
+  background: #000000;
+  position: relative;
+}
+
+/* Centered layout for loading and login screens */
+.sign-tx-container.centered {
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.loading-container {
+  text-align: center;
+  color: #ffffff;
+}
+
+.spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid #333;
+  border-top-color: #EFB89E;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin: 0 auto 20px;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.sign-tx-card {
+  background: #000000;
+  border: 1px solid #d3d3d3;
+  border-radius: 20px;
+  padding: 40px;
+  max-width: 600px;
+  width: 100%;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  animation: slideUp 0.5s ease-out;
+}
+
+.sign-tx-title {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #ffffff;
+  margin-bottom: 30px;
+  text-align: center;
+}
+
+.tx-details {
+  background: #1a1a1a;
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 20px;
+}
+
+.detail-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding: 12px 0;
+  border-bottom: 1px solid #333;
+  gap: 20px;
+}
+
+.detail-row:last-child {
+  border-bottom: none;
+}
+
+.detail-label {
+  color: #999;
+  font-size: 0.9rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  flex-shrink: 0;
+}
+
+.detail-value {
+  color: #ffffff;
+  font-size: 0.95rem;
+  text-align: right;
+  word-break: break-all;
+}
+
+.chain-badge {
+  background: #EFB89E;
+  color: #000000;
+  padding: 4px 12px;
+  border-radius: 6px;
+  font-weight: 700;
+  font-size: 0.85rem;
+}
+
+.address-text {
+  font-family: 'Courier New', monospace;
+  font-size: 0.85rem;
+  color: #EFB89E;
+}
+
+.amount-text {
+  font-weight: 700;
+  font-size: 1.1rem;
+  color: #10b981;
+}
+
+.data-text {
+  font-family: 'Courier New', monospace;
+  font-size: 0.75rem;
+  color: #999;
+  max-height: 100px;
+  overflow-y: auto;
+}
+
+.action-buttons {
+  display: flex;
+  gap: 15px;
+  margin-top: 30px;
+}
+
+.action-buttons .btn {
+  flex: 1;
+}
+
+.success-message {
+  background: rgba(16, 185, 129, 0.2);
+  color: #10b981;
+  padding: 16px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+  border-left: 4px solid #10b981;
+  font-size: 0.9rem;
+}
+
+.tx-hash {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+.tx-hash-label {
+  display: block;
+  font-size: 0.8rem;
+  margin-bottom: 6px;
+  opacity: 0.8;
+}
+
+.tx-hash-value {
+  display: block;
+  font-family: 'Courier New', monospace;
+  font-size: 0.85rem;
+  word-break: break-all;
+}
+
+.login-subtitle {
+  color: #d3d3d3;
+  text-align: center;
+  margin-bottom: 30px;
+  font-size: 1rem;
+  line-height: 1.5;
+}
+
+.btn-cancel-link {
+  display: block;
+  width: 100%;
+  margin-top: 20px;
+  padding: 12px;
+  background: transparent;
+  border: none;
+  color: #999;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: color 0.3s ease;
+}
+/* Success Modal - Bottom Sheet Style (matching confirm-modal) */
+.success-modal-overlay {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  top: 0;
+  background: rgba(0, 0, 0, 0.7);
+  z-index: 100;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+
+.success-modal {
+  width: 100%;
+  background: #1a1a1a;
+  border-radius: 24px 24px 0 0;
+  padding: 20px 20px 32px;
+  max-height: 70vh;
+  overflow-y: auto;
+  box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.5);
+}
+
+.success-modal-header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.success-modal-icon {
+  width: 32px;
+  height: 32px;
+  background: #1dd874;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #02040a;
+  flex-shrink: 0;
+}
+
+.success-modal-title {
+  font-size: 20px;
+  font-weight: 700;
+  color: #ffffff;
+  margin: 0 0 12px 0;
+  text-align: left;
+}
+
+.success-modal-description {
+  font-size: 14px;
+  color: #999999;
+  margin: 0 0 24px 0;
+  text-align: left;
+  line-height: 1.5;
+}
+
+
+
+.btn-cancel-link:hover:not(:disabled) {
+  color: #EFB89E;
+}
+
+.btn-cancel-link:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+@media (max-width: 600px) {
+  .sign-tx-card {
+    padding: 30px 20px;
+  }
+
+  .sign-tx-title {
+    font-size: 1.5rem;
+  }
+
+  .detail-row {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .detail-value {
+    text-align: left;
+  }
+
+  .action-buttons {
+    flex-direction: column;
+  }
+}
+
+.message-box {
+  width: 100%;
+  background: #1a1a1a;
+  border: 2px solid #EFB89E;
+  border-radius: 8px;
+  padding: 16px;
+  margin-top: 8px;
+  color: #ffffff !important;
+  font-size: 0.95rem;
+  line-height: 1.6;
+  word-break: break-word;
+  white-space: pre-wrap;
+  font-weight: 500;
+}
+
+/* Header Section */
+.send-funds-header {
+  padding: 16px 20px;
+  padding-top: 60px;
+  position: relative;
+}
+
+.back-button {
+  background: transparent;
+  border: none;
+  color: #ffffff;
+  cursor: pointer;
+  padding: 8px;
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.header-content {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.send-funds-title {
+  font-size: 20px;
+  font-weight: 500;
+  color: #d3d3d3;
+  margin: 0;
+  text-align: left;
+}
+
+.send-funds-subtitle {
+  font-size: 16px;
+  font-weight: 400;
+  color: #999999;
+  margin: 4px 0 0 0;
+  text-align: left;
+}
+
+.send-funds-from {
+  font-size: 12px;
+  color: #d3d3d3;
+  margin: 8px 0 0 0;
+  text-align: left;
+}
+
+.select-network-section {
+  margin-top: 24px;
+}
+
+.select-network-label {
+  font-size: 14px;
+  color: #d3d3d3;
+  font-weight: 500;
+}
+
+/* Confirm Modal */
+.confirm-modal-overlay {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  top: 0;
+  background: rgba(0, 0, 0, 0.7);
+  z-index: 100;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+
+.confirm-modal {
+  width: 100%;
+  background: #1a1a1a;
+  border-radius: 24px 24px 0 0;
+  padding: 20px 20px 32px;
+  max-height: 70vh;
+  overflow-y: auto;
+  box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.5);
+}
+
+.confirm-modal-header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.confirm-modal-icon {
+  width: 32px;
+  height: 32px;
+  background: #2a2a2a;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #ffffff;
+  flex-shrink: 0;
+}
+
+.confirm-modal-title {
+  font-size: 20px;
+  font-weight: 700;
+  color: #ffffff;
+  margin: 0 0 12px 0;
+  text-align: left;
+}
+
+.confirm-modal-description {
+  font-size: 14px;
+  color: #999999;
+  margin: 0 0 24px 0;
+  text-align: left;
+  line-height: 1.5;
+}
+
+.withdrawal-details {
+  background: #2a2a2a;
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 24px;
+}
+
+.withdrawal-detail-row {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.withdrawal-detail-row:last-child {
+  margin-bottom: 0;
+}
+
+.withdrawal-detail-label {
+  font-size: 12px;
+  color: #999999;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.withdrawal-detail-value {
+  font-size: 14px;
+  color: #ffffff;
+  font-weight: 400;
+  word-break: break-all;
+  font-family: 'Courier New', monospace;
+}
+
+.withdrawal-detail-value-container {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.copy-icon-button {
+  background: transparent;
+  border: none;
+  color: #EFB89E;
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  transition: background-color 0.2s, transform 0.1s;
+  flex-shrink: 0;
+}
+
+.copy-icon-button:hover {
+  background: rgba(239, 184, 158, 0.1);
+  transform: scale(1.1);
+}
+
+.copy-icon-button:active {
+  transform: scale(0.95);
+}
+
+.confirm-modal-buttons {
+  display: flex;
+  gap: 12px;
+}
+
+.confirm-btn {
+  flex: 1;
+  padding: 14px 20px;
+  border: none;
+  border-radius: 12px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.2s;
+  color: #000000;
+}
+
+.confirm-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.cancel-btn {
+  background: #2a2a2a;
+  color: #ffffff;
+}
+
+.confirm-primary-btn {
+  background:#EFB89E;
+  color: #000000;
+}
+
+.confirm-primary-btn:hover:not(:disabled) {
+  background: #EFB89E;
+  color: #000000;
+}
+
+@media (max-width: 600px) {
+  .confirm-modal {
+    padding: 20px 16px 28px;
+  }
+  
+  .send-funds-header {
+    padding: 16px;
+    padding-top: 50px;
+  }
+}
+
+.confirm-primary-btn:active:not(:disabled) {
+  opacity: 0.9;
+}
+
+.cancel-btn:active:not(:disabled) {
+  opacity: 0.8;
+}
+
+
+/* Transaction Status Icons */
+.status-icon {
+  font-size: 4rem;
+  text-align: center;
+  margin-bottom: 20px;
+  animation: statusPulse 2s ease-in-out infinite;
+}
+
+.status-icon.pending {
+  animation: statusSpin 2s linear infinite;
+}
+
+.status-icon.failed {
+  animation: statusShake 0.5s ease-in-out;
+}
+
+.status-icon.success {
+  animation: statusBounce 0.6s ease-in-out;
+}
+
+@keyframes statusPulse {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.05);
+    opacity: 0.8;
+  }
+}
+
+@keyframes statusSpin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes statusShake {
+  0%, 100% {
+    transform: translateX(0);
+  }
+  25% {
+    transform: translateX(-10px);
+  }
+  75% {
+    transform: translateX(10px);
+  }
+}
+
+@keyframes statusBounce {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-20px);
+  }
+}
+
+/* Status-specific styling */
+.sign-tx-card .status-icon + .sign-tx-title {
+  margin-top: 10px;
+}
+
+.sign-tx-card .status-icon + .sign-tx-title + .login-subtitle {
+  margin-top: 10px;
+  margin-bottom: 20px;
+}
