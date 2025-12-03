@@ -66,17 +66,24 @@ function App() {
   useEffect(() => {
     if (!privyReady) return;
     if (hasCheckedSearchParams) return;
+    if (!authenticated) return;
+    if (hasRedirected) return; // Don't logout if wallets have been created
     
+    // Check if wallets already exist
+    const hasWallets = (evmWallets.length > 0 || solanaWallets.length > 0);
     
-    
-    // Only check and logout if user doesn't have Privy wallet and is authenticated
-    // But don't logout if wallets are being cgenerated
-    if (hasPrivyWalletParam === 'false' && authenticated && !loading && !hasRedirected) {
+    // Only logout if:
+    // 1. hasPrivyWallet === 'false' (user doesn't have Privy wallet)
+    // 2. User is authenticated
+    // 3. Wallets are not being generated (!loading)
+    // 4. Wallets haven't been created yet (!hasWallets)
+    // 5. Hasn't redirected yet (!hasRedirected)
+    if (hasPrivyWalletParam === 'false' && !loading && !hasWallets) {
       logout();
     }
     
     setHasCheckedSearchParams(true);
-  }, [privyReady, searchParams, loading, hasRedirected, hasCheckedSearchParams, logout,hasPrivyWalletParam]);
+  }, [privyReady, authenticated, searchParams, loading, hasRedirected, hasCheckedSearchParams, logout, hasPrivyWalletParam, evmWallets, solanaWallets]);
 
   // ✅ Ensure EVM + Solana + Tron wallets exist, then send to native
   useEffect(() => {
