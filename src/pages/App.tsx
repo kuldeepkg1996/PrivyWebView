@@ -70,9 +70,12 @@ function App() {
     
     // Only check and logout if user doesn't have Privy wallet and is authenticated
     // But don't logout if wallets are being generated
+    setTimeout(() => {
+      setLoading(false); // Ensure loading is false before logout
     if (hasPrivyWalletParam === 'false' && authenticated && !loading && !hasRedirected) {
       logout();
     }
+  }, 500); // Slight delay to ensure smooth logout
     
     setHasCheckedSearchParams(true);
   }, [privyReady, searchParams, authenticated, loading, hasRedirected, hasCheckedSearchParams, logout]);
