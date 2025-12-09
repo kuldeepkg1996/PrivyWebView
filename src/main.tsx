@@ -10,6 +10,7 @@ import EvmSignMessage from './pages/EvmSignMessage'
 import SolanaSignMessage from './pages/SolanaSignMessage'
 import TronSignMessage from './pages/TronSignMessage'
 import TronSignTransaction from './pages/TronSignTransaction'
+import EvmSignData from './pages/EvmSignData'
 import Profile from './pages/Profile'
 import { supportedChains } from './constants/chains'
 import { Buffer } from 'buffer';
@@ -65,6 +66,7 @@ createRoot(rootElement).render(
           <Route path="/solana/signMessage" element={<SolanaSignMessage />} />
           <Route path="/tron/signMessage" element={<TronSignMessage />} />
           <Route path="/tron/signTransaction" element={<TronSignTransaction />} />
+          <Route path="/evm/signdata" element={<EvmSignData />} />
           <Route path="/profile" element={<Profile />} />
         </Routes>
       </BrowserRouter>
