@@ -18,6 +18,8 @@ import '../styles/App.css';
 import { ensureAllWallets } from '../utils/walletManager';
 
 function App() {
+
+  
   const [loading, setLoading] = useState(false);
   const [signupLoading, setSignupLoading] = useState(false);
   const [loginLoading, setLoginLoading] = useState(false);
