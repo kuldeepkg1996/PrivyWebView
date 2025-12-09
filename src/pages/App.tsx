@@ -80,9 +80,9 @@ function App() {
     // 3. Wallets are not being generated (!loading)
     // 4. Wallets haven't been created yet (!hasWallets)
     // 5. Hasn't redirected yet (!hasRedirected)
-    if (hasPrivyWalletParam === 'false' && !loading && !hasWallets) {
-      logout();
-    }
+    // if (hasPrivyWalletParam === 'false' && !loading && !hasWallets) {
+    //   logout();
+    // }
     
     setHasCheckedSearchParams(true);
   }, [privyReady, authenticated, searchParams, loading, hasRedirected, hasCheckedSearchParams, logout, hasPrivyWalletParam, evmWallets, solanaWallets]);
