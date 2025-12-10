@@ -12,6 +12,7 @@ import TronSignMessage from './pages/TronSignMessage'
 import TronSignTransaction from './pages/TronSignTransaction'
 import EvmSignData from './pages/EvmSignData'
 import Profile from './pages/Profile'
+import NotFound from './pages/NotFound'
 import { supportedChains } from './constants/chains'
 import { Buffer } from 'buffer';
 
@@ -68,6 +69,7 @@ createRoot(rootElement).render(
           <Route path="/tron/signTransaction" element={<TronSignTransaction />} />
           <Route path="/evm/signdata" element={<EvmSignData />} />
           <Route path="/profile" element={<Profile />} />
+          <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
     </PrivyProvider>
