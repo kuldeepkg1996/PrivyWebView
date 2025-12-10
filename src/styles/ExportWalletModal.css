@@ -1,0 +1,650 @@
+/* Export Wallet Modal Styles */
+
+.export-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.85);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 20px;
+  animation: fadeIn 0.2s ease-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.export-modal-card {
+  background: #1a1a1a;
+  border: 1px solid #333333;
+  border-radius: 16px;
+  padding: 32px;
+  max-width: 500px;
+  width: 100%;
+  position: relative;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+  animation: slideUp 0.3s ease-out;
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.export-modal-close {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  background: transparent;
+  border: none;
+  color: #999999;
+  font-size: 24px;
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+  border-radius: 6px;
+}
+
+.export-modal-close:hover {
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.export-modal-content {
+  text-align: center;
+}
+
+.export-modal-icon {
+  font-size: 64px;
+  margin-bottom: 20px;
+  animation: scaleIn 0.4s ease-out;
+}
+
+@keyframes scaleIn {
+  from {
+    transform: scale(0.5);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.export-modal-icon.success span {
+  display: inline-block;
+  animation: bounce 0.6s ease-out;
+}
+
+@keyframes bounce {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+.export-modal-icon.error span {
+  display: inline-block;
+  animation: shake 0.4s ease-out;
+}
+
+@keyframes shake {
+  0%, 100% {
+    transform: translateX(0);
+  }
+  25% {
+    transform: translateX(-10px);
+  }
+  75% {
+    transform: translateX(10px);
+  }
+}
+
+.export-modal-title {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: #ffffff;
+  margin: 0 0 12px 0;
+}
+
+.export-modal-description {
+  font-size: 0.95rem;
+  color: #999999;
+  margin: 0 0 24px 0;
+  line-height: 1.5;
+}
+
+/* Wallet Details */
+.export-wallet-details {
+  background: #0a0a0a;
+  border: 1px solid #333333;
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 20px;
+  text-align: left;
+}
+
+.export-detail-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 0;
+  border-bottom: 1px solid #333333;
+  gap: 12px;
+}
+
+.export-detail-row:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.export-detail-row:first-child {
+  padding-top: 0;
+}
+
+.export-detail-label {
+  font-size: 0.85rem;
+  color: #999999;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  flex-shrink: 0;
+}
+
+.export-detail-value {
+  font-size: 0.9rem;
+  color: #ffffff;
+  text-align: right;
+}
+
+.export-address-container {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  justify-content: flex-end;
+}
+
+.export-address-text {
+  font-family: 'Courier New', monospace;
+  font-size: 0.8rem;
+  color: #EFB89E;
+  word-break: break-all;
+  text-align: right;
+  line-height: 1.4;
+}
+
+.btn-copy-small {
+  background: #2a2a2a;
+  border: 1px solid #444444;
+  border-radius: 6px;
+  padding: 6px 8px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  color: #EFB89E;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.btn-copy-small:hover {
+  background: #333333;
+  border-color: #EFB89E;
+  transform: scale(1.05);
+}
+
+/* Warning */
+.export-warning {
+  background: rgba(255, 107, 107, 0.1);
+  border: 1px solid rgba(255, 107, 107, 0.3);
+  border-radius: 10px;
+  padding: 14px 16px;
+  margin-bottom: 24px;
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  text-align: left;
+}
+
+.warning-icon {
+  font-size: 20px;
+  flex-shrink: 0;
+  line-height: 1;
+}
+
+.warning-text {
+  font-size: 0.85rem;
+  color: #ff6b6b;
+  line-height: 1.5;
+  font-weight: 500;
+}
+
+/* Actions */
+.export-modal-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+}
+
+.btn {
+  padding: 12px 24px;
+  border: none;
+  border-radius: 10px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-width: 140px;
+}
+
+.btn-primary {
+  background: #EFB89E;
+  color: #000000;
+}
+
+.btn-primary:hover {
+  background: #f0c4a8;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(239, 184, 158, 0.4);
+}
+
+.btn-primary.solana {
+  background: #EFB89E;
+  color: #000000;
+}
+
+.btn-primary.solana:hover {
+  background: #14F195;
+  color: #000000;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(20, 241, 149, 0.4);
+}
+
+.btn-primary.tron {
+  background: #EFB89E;
+  color: #000000;
+}
+
+.btn-primary.tron:hover {
+  background: #FF0013;
+  color: #ffffff;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(255, 0, 19, 0.4);
+}
+
+.btn-primary.ethereum {
+  background: #EFB89E;
+  color: #000000;
+}
+
+.btn-primary.ethereum:hover {
+  background: #627EEA;
+  color: #ffffff;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(98, 126, 234, 0.4);
+}
+
+.btn-secondary {
+  background: transparent;
+  color: #999999;
+  border: 2px solid #444444;
+}
+
+.btn-secondary:hover {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: #666666;
+  color: #ffffff;
+  transform: translateY(-2px);
+}
+
+.spinner-small {
+  width: 16px;
+  height: 16px;
+  border: 2.5px solid rgba(0, 0, 0, 0.2);
+  border-top-color: #000000;
+  border-radius: 50%;
+  animation: spin 0.6s linear infinite;
+  display: inline-block;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Wallet Badge */
+.wallet-badge {
+  background: #EFB89E;
+  color: #000000;
+  padding: 4px 12px;
+  border-radius: 6px;
+  font-weight: 700;
+  font-size: 0.8rem;
+}
+
+.wallet-badge.solana {
+  background: #14F195;
+  color: #000000;
+}
+
+.wallet-badge.tron {
+  background: #FF0013;
+  color: #ffffff;
+}
+
+.wallet-badge.ethereum {
+  background: #627EEA;
+  color: #ffffff;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .export-modal-overlay {
+    padding: 12px;
+    align-items: flex-end;
+  }
+
+  .export-modal-card {
+    padding: 28px 20px;
+    max-width: 100%;
+    border-radius: 16px 16px 0 0;
+    animation: slideUpMobile 0.3s ease-out;
+  }
+
+  @keyframes slideUpMobile {
+    from {
+      transform: translateY(100%);
+    }
+    to {
+      transform: translateY(0);
+    }
+  }
+
+  .export-modal-close {
+    top: 12px;
+    right: 12px;
+  }
+
+  .export-modal-icon {
+    font-size: 56px;
+    margin-bottom: 16px;
+  }
+
+  .export-modal-title {
+    font-size: 1.6rem;
+  }
+
+  .export-modal-description {
+    font-size: 0.9rem;
+    margin-bottom: 20px;
+  }
+
+  .export-wallet-details {
+    padding: 16px;
+    margin-bottom: 16px;
+  }
+
+  .export-detail-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+    padding: 12px 0;
+  }
+
+  .export-detail-label {
+    font-size: 0.8rem;
+  }
+
+  .export-detail-value {
+    font-size: 0.85rem;
+  }
+
+  .export-address-container {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .export-address-text {
+    text-align: left;
+    font-size: 0.75rem;
+    flex: 1;
+  }
+
+  .wallet-badge {
+    font-size: 0.75rem;
+    padding: 3px 10px;
+  }
+
+  .export-warning {
+    padding: 12px 14px;
+    margin-bottom: 20px;
+  }
+
+  .warning-icon {
+    font-size: 18px;
+  }
+
+  .warning-text {
+    font-size: 0.8rem;
+  }
+
+  .export-modal-actions {
+    flex-direction: column-reverse;
+    width: 100%;
+    gap: 10px;
+  }
+
+  .btn {
+    width: 100%;
+    min-width: auto;
+    padding: 14px 20px;
+  }
+}
+
+@media (max-width: 640px) {
+  .export-modal-overlay {
+    padding: 0;
+  }
+
+  .export-modal-card {
+    padding: 24px 18px;
+    border-radius: 20px 20px 0 0;
+  }
+
+  .export-modal-title {
+    font-size: 1.5rem;
+  }
+
+  .export-modal-description {
+    font-size: 0.88rem;
+  }
+
+  .export-wallet-details {
+    padding: 14px;
+  }
+
+  .export-detail-row {
+    padding: 10px 0;
+  }
+
+  .export-address-text {
+    font-size: 0.72rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .export-modal-card {
+    padding: 20px 16px 24px;
+    border-radius: 16px 16px 0 0;
+  }
+
+  .export-modal-close {
+    top: 10px;
+    right: 10px;
+    font-size: 20px;
+  }
+
+  .export-modal-icon {
+    font-size: 48px;
+    margin-bottom: 14px;
+  }
+
+  .export-modal-title {
+    font-size: 1.35rem;
+    margin-bottom: 10px;
+  }
+
+  .export-modal-description {
+    font-size: 0.85rem;
+    margin-bottom: 18px;
+  }
+
+  .export-wallet-details {
+    padding: 12px;
+    margin-bottom: 14px;
+  }
+
+  .export-detail-row {
+    padding: 10px 0;
+    gap: 6px;
+  }
+
+  .export-detail-label {
+    font-size: 0.75rem;
+  }
+
+  .export-detail-value {
+    font-size: 0.8rem;
+  }
+
+  .export-address-text {
+    font-size: 0.68rem;
+    line-height: 1.5;
+  }
+
+  .btn-copy-small {
+    padding: 5px 7px;
+    font-size: 0.85rem;
+  }
+
+  .wallet-badge {
+    font-size: 0.7rem;
+    padding: 3px 8px;
+  }
+
+  .export-warning {
+    padding: 10px 12px;
+    margin-bottom: 18px;
+    gap: 8px;
+  }
+
+  .warning-icon {
+    font-size: 16px;
+  }
+
+  .warning-text {
+    font-size: 0.75rem;
+    line-height: 1.4;
+  }
+
+  .export-modal-actions {
+    gap: 8px;
+  }
+
+  .btn {
+    padding: 12px 18px;
+    font-size: 0.9rem;
+  }
+}
+
+@media (max-width: 360px) {
+  .export-modal-card {
+    padding: 18px 14px 22px;
+  }
+
+  .export-modal-icon {
+    font-size: 42px;
+    margin-bottom: 12px;
+  }
+
+  .export-modal-title {
+    font-size: 1.2rem;
+  }
+
+  .export-modal-description {
+    font-size: 0.8rem;
+    margin-bottom: 16px;
+  }
+
+  .export-wallet-details {
+    padding: 10px;
+  }
+
+  .export-detail-row {
+    padding: 8px 0;
+  }
+
+  .export-detail-label {
+    font-size: 0.7rem;
+  }
+
+  .export-detail-value {
+    font-size: 0.75rem;
+  }
+
+  .export-address-text {
+    font-size: 0.65rem;
+  }
+
+  .btn-copy-small {
+    padding: 4px 6px;
+    font-size: 0.8rem;
+  }
+
+  .wallet-badge {
+    font-size: 0.65rem;
+    padding: 2px 7px;
+  }
+
+  .export-warning {
+    padding: 8px 10px;
+    margin-bottom: 16px;
+  }
+
+  .warning-text {
+    font-size: 0.7rem;
+  }
+
+  .btn {
+    padding: 11px 16px;
+    font-size: 0.85rem;
+  }
+}

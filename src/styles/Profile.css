@@ -330,6 +330,35 @@
   }
 }
 
+/* Info Banner */
+.info-banner {
+  background: rgba(239, 184, 158, 0.1);
+  border: 1px solid rgba(239, 184, 158, 0.3);
+  border-radius: 8px;
+  padding: 12px 14px;
+  color: #EFB89E;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  animation: slideDown 0.3s;
+}
+
+.error-message {
+  background: rgba(255, 107, 107, 0.1);
+  border: 1px solid rgba(255, 107, 107, 0.3);
+  border-radius: 8px;
+  padding: 12px 14px;
+  color: #ff6b6b;
+  font-size: 14px;
+  animation: shake 0.3s;
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-6px); }
+  75% { transform: translateX(6px); }
+}
+
 .warning-banner {
   background: rgba(255, 107, 107, 0.15);
   color: #ff6b6b;

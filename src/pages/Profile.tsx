@@ -1,23 +1,24 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { usePrivy } from '@privy-io/react-auth';
 import { useExportWallet as useSolanaExportWallet } from '@privy-io/react-auth/solana';
 import { FiCopy, FiCheck } from 'react-icons/fi';
 import arrowLeftIcon from '../assets/ArrowLeft.svg';
 import TronWallet from './TronWallet';
-import EmailLinkModal from '../components/EmailLinkModal';
+import ExportWalletModal from '../components/ExportWalletModal';
 import '../styles/Profile.css';
 
 function Profile() {
   const navigate = useNavigate();
-  const { user, authenticated, ready, logout, exportWallet: exportWalletEvm } = usePrivy();
+  const [searchParams] = useSearchParams();
+  const { user, authenticated, ready, exportWallet: exportWalletEvm } = usePrivy();
   const { exportWallet: exportSolanaWallet } = useSolanaExportWallet();
 
   const [copiedField, setCopiedField] = useState('');
   const [error, setError] = useState('');
-  const [exportingWallet, setExportingWallet] = useState<string | null>(null);
-  const [exportedPrivateKey, setExportedPrivateKey] = useState('');
-  const [showEmailModal, setShowEmailModal] = useState(false);
+  const [autoExportTriggered, setAutoExportTriggered] = useState(false);
+  const [showExportModal, setShowExportModal] = useState(false);
+  const [selectedWalletForExport, setSelectedWalletForExport] = useState<any | null>(null);
 
   const handleCopy = async (text: string, fieldName: string) => {
     try {
@@ -29,38 +30,53 @@ function Profile() {
     }
   };
 
+  // Auto-trigger export wallet modal if walletAddress query param is present
+  useEffect(() => {
+    if (!authenticated || !ready || !user || autoExportTriggered) return;
 
-  const handleLogout = async () => {
-    try {
-      await logout();
-      navigate('/');
-    } catch (err) {
-      // Silent fail for logout
-    }
-  };
+    const walletAddressParam = searchParams.get('walletAddress');
+    if (!walletAddressParam) return;
+
+    // Find the wallet that matches the address
+    const normalizedParam = walletAddressParam.toLowerCase();
+    const matchedWallet: any = user.linkedAccounts?.find(
+      (account: any) => 
+        account.type === 'wallet' && 
+        account.address &&
+        account.address.toLowerCase() === normalizedParam
+    );
+
+    setAutoExportTriggered(true);
+    
+    // Show modal with wallet (or null if not found)
+    setTimeout(() => {
+      setSelectedWalletForExport(matchedWallet || null);
+      setShowExportModal(true);
+    }, 500);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [authenticated, ready, user, searchParams, autoExportTriggered]);
 
   const handleExportWallet = async (address: string, chainType: string) => {
     try {
-      const walletKey = `${chainType}-${address}`;
-      if (exportingWallet === walletKey && exportedPrivateKey) {
-        // Hide private key
-        setExportingWallet(null);
-        setExportedPrivateKey('');
-      } else {
-        // Show private key
-        setExportingWallet(walletKey);
-        if (chainType === 'ethereum') {
-          await exportWalletEvm({ address: address });
-        } else if (chainType === 'solana') {
-          await exportSolanaWallet({ address: address });
-        }
-        // Note: Privy's exportWallet functions handle the private key display through their own UI
+      setError('');
+      if (chainType === 'ethereum') {
+        await exportWalletEvm({ address: address });
+      } else if (chainType === 'solana') {
+        await exportSolanaWallet({ address: address });
       }
+      // Privy's exportWallet functions handle the private key display through their own UI
+      // Close the modal after triggering Privy's modal
+      setShowExportModal(false);
     } catch (err: any) {
       setError('Failed to export wallet: ' + (err?.message || 'Unknown error'));
-      setExportingWallet(null);
-      setExportedPrivateKey('');
+      throw err; // Re-throw to let modal handle it
     }
+  };
+
+  const handleCloseExportModal = () => {
+    setShowExportModal(false);
+    setSelectedWalletForExport(null);
+    setError('');
   };
 
   const getChainBadgeClass = (chainType: string) => {
@@ -249,24 +265,13 @@ function Profile() {
                   <div className="export-wallet-section">
                     <button
                       className={`btn-export-wallet ${getChainBadgeClass(account.chainType)}`}
-                      onClick={() => handleExportWallet(account.address, account.chainType)}
+                      onClick={() => {
+                        setSelectedWalletForExport(account);
+                        setShowExportModal(true);
+                      }}
                     >
-                      {exportingWallet === `${account.chainType}-${account.address}` && exportedPrivateKey
-                        ? '🔒 Hide Private Key'
-                        : '🔑 Export Private Key'}
+                      🔑 Export Private Key
                     </button>
-
-                    {exportingWallet === `${account.chainType}-${account.address}` && exportedPrivateKey && (
-                      <div className="private-key-container">
-                        <div className="warning-banner">
-                          ⚠️ Never share your private key! Anyone with this key has full access to your wallet.
-                        </div>
-                        <div className="private-key-box">
-                          <span className="private-key-text">{exportedPrivateKey}</span>
-                          <CopyButton text={exportedPrivateKey} fieldName={`privateKey${index}`} />
-                        </div>
-                      </div>
-                    )}
                   </div>
                 </div>
               ))}
@@ -320,6 +325,14 @@ function Profile() {
           window.location.reload();
         }}
       /> */}
+
+      {/* Export Wallet Modal */}
+      <ExportWalletModal
+        isOpen={showExportModal}
+        onClose={handleCloseExportModal}
+        wallet={selectedWalletForExport}
+        onExport={handleExportWallet}
+      />
     </div>
   );
 }

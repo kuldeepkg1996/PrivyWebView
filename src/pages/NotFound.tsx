@@ -1,12 +1,12 @@
-import { useNavigate } from 'react-router-dom';
+// import { useNavigate } from 'react-router-dom';
 import '../styles/NotFound.css';
 
 function NotFound() {
-  const navigate = useNavigate();
+  // const navigate = useNavigate();
 
-  const handleGoHome = () => {
-    navigate('/');
-  };
+  // const handleGoHome = () => {
+  //   navigate('/');
+  // };
 
   return (
     <div className="not-found-container">
