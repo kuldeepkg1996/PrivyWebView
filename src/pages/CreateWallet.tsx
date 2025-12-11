@@ -64,21 +64,20 @@ function CreateWallet() {
   const hasPrivyWalletParam = searchParams.get('hasPrivyWallet');
 
   // Check search params and logout if hasPrivyWallet === 'false'
+  // Only check once when privy is ready and we haven't checked yet
   useEffect(() => {
     if (!privyReady) return;
     if (hasCheckedSearchParams) return;
     
-    // If hasPrivyWallet is 'false', logout immediately
+    // Only logout if hasPrivyWallet is explicitly 'false' in the URL
     if (hasPrivyWalletParam === 'false') {
       if (authenticated) {
         logout();
       }
-      setHasCheckedSearchParams(true);
-      return;
     }
     
     setHasCheckedSearchParams(true);
-  }, []);
+  }, [privyReady, hasCheckedSearchParams, hasPrivyWalletParam, authenticated, logout]);
 
   // ✅ Ensure EVM + Solana + Tron wallets exist, then send to native
   useEffect(() => {
