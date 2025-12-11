@@ -27,6 +27,7 @@ function CreateWallet() {
   const [hasRedirected, setHasRedirected] = useState(false);
   const [hasCheckedSearchParams, setHasCheckedSearchParams] = useState(false);
   const [hasLoggedOut, setHasLoggedOut] = useState(false);
+  const [isFreshLogin, setIsFreshLogin] = useState(true); // Default true - allow wallet creation for new logins
   const [searchParams] = useSearchParams();
 
   const { authenticated, ready: privyReady, user, logout } = usePrivy();
@@ -65,20 +66,41 @@ function CreateWallet() {
   const hasPrivyWalletParam = searchParams.get('hasPrivyWallet');
 
   // Logout immediately when user comes to this page if authenticated
-  // Also logout if hasPrivyWallet === 'false' (and authenticated)
   useEffect(() => {
     if (!privyReady) return;
-    if (hasLoggedOut) return;
     if (hasCheckedSearchParams) return;
     
-    // Logout if authenticated (always logout on this page) OR if hasPrivyWallet is 'false' and authenticated
+    // Logout if authenticated (always logout on this page)
     if (authenticated) {
-      logout();
-      setHasLoggedOut(true);
+      const performLogout = async () => {
+        try {
+          await logout();
+          setHasLoggedOut(true);
+          setHasRedirected(false); // Reset redirect flag
+          setIsFreshLogin(false); // Reset fresh login flag - will be set to true after new login
+        } catch (err) {
+          console.error('Logout error:', err);
+          // Even if logout fails, mark as logged out to proceed
+          setHasLoggedOut(true);
+          setIsFreshLogin(false);
+        }
+      };
+      performLogout();
     }
     
     setHasCheckedSearchParams(true);
-  }, [privyReady, authenticated, hasLoggedOut, hasCheckedSearchParams, logout]);
+  }, [privyReady, authenticated, hasCheckedSearchParams, logout]);
+
+  // Track when user logs in after logout (fresh login)
+  // Also allow wallet creation if user was never authenticated (fresh login = true by default)
+  useEffect(() => {
+    if (!privyReady) return;
+    // If we've logged out and now user is authenticated, this is a fresh login
+    if (hasLoggedOut && authenticated && !isFreshLogin) {
+      setIsFreshLogin(true);
+    }
+    // If user was never authenticated (no logout happened), keep isFreshLogin as true
+  }, [privyReady, hasLoggedOut, authenticated, isFreshLogin]);
 
   // ✅ Ensure EVM + Solana + Tron wallets exist, then send to native
   // Only run after user has logged in/signed up (after initial logout)
@@ -90,6 +112,8 @@ function CreateWallet() {
     if (hasPrivyWalletParam === 'false') return; // Don't create wallets if hasPrivyWallet is false
     // Only create wallets if we've completed the initial check (logout if needed)
     if (!hasCheckedSearchParams) return;
+    // Only create wallets after a fresh login (after logout)
+    if (!isFreshLogin) return;
 
     const ensureWalletsAndSend = async () => {
       setLoading(true);
@@ -137,7 +161,8 @@ function CreateWallet() {
     user,
     hasPrivyWalletParam,
     hasLoggedOut,
-    hasCheckedSearchParams
+    hasCheckedSearchParams,
+    isFreshLogin
   ]);
 
   /**
