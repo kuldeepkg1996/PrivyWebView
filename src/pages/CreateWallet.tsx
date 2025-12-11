@@ -26,6 +26,7 @@ function CreateWallet() {
   const [initTimeout, setInitTimeout] = useState(false);
   const [hasRedirected, setHasRedirected] = useState(false);
   const [hasCheckedSearchParams, setHasCheckedSearchParams] = useState(false);
+  const [hasLoggedOut, setHasLoggedOut] = useState(false);
   const [searchParams] = useSearchParams();
 
   const { authenticated, ready: privyReady, user, logout } = usePrivy();
@@ -63,29 +64,32 @@ function CreateWallet() {
 
   const hasPrivyWalletParam = searchParams.get('hasPrivyWallet');
 
-  // Check search params and logout if hasPrivyWallet === 'false'
-  // Only check once when privy is ready and we haven't checked yet
+  // Logout immediately when user comes to this page if authenticated
+  // Also logout if hasPrivyWallet === 'false' (and authenticated)
   useEffect(() => {
     if (!privyReady) return;
+    if (hasLoggedOut) return;
     if (hasCheckedSearchParams) return;
     
-    // Only logout if hasPrivyWallet is explicitly 'false' in the URL
-    if (hasPrivyWalletParam === 'false') {
-      if (authenticated) {
-        logout();
-      }
+    // Logout if authenticated (always logout on this page) OR if hasPrivyWallet is 'false' and authenticated
+    if (authenticated) {
+      logout();
+      setHasLoggedOut(true);
     }
     
     setHasCheckedSearchParams(true);
-  }, [privyReady, hasCheckedSearchParams, hasPrivyWalletParam, authenticated, logout]);
+  }, [privyReady, authenticated, hasLoggedOut, hasCheckedSearchParams, logout]);
 
   // ✅ Ensure EVM + Solana + Tron wallets exist, then send to native
+  // Only run after user has logged in/signed up (after initial logout)
   useEffect(() => {
     if (!authenticated) return;
     if (!allWalletsReady) return;
     if (hasRedirected) return;
     if (loading) return;
     if (hasPrivyWalletParam === 'false') return; // Don't create wallets if hasPrivyWallet is false
+    // Only create wallets if we've completed the initial check (logout if needed)
+    if (!hasCheckedSearchParams) return;
 
     const ensureWalletsAndSend = async () => {
       setLoading(true);
@@ -110,7 +114,7 @@ function CreateWallet() {
           throw new Error(result.error || 'Failed to create wallet(s)');
         }
 
-        // Wallets generated successfully - redirect to app (no logout needed)
+        // Wallets generated successfully - redirect to app
         setHasRedirected(true);
       } catch (err: any) {
         setError(err?.message || 'Failed to create wallet(s)');
@@ -131,7 +135,9 @@ function CreateWallet() {
     createOtherWallet,
     hasRedirected,
     user,
-    hasPrivyWalletParam
+    hasPrivyWalletParam,
+    hasLoggedOut,
+    hasCheckedSearchParams
   ]);
 
   /**
@@ -202,6 +208,17 @@ function CreateWallet() {
     );
   }
 
+  // Show logout in progress if we're logging out
+  if (hasLoggedOut && authenticated && privyReady) {
+    return (
+      <div className="app-container">
+        <div className="loading-container">
+          <div className="spinner" />
+        </div>
+      </div>
+    );
+  }
+
   // Not authenticated - show login/signup
   if (!authenticated) {
     return (
@@ -244,22 +261,40 @@ function CreateWallet() {
     );
   }
 
-  // If hasPrivyWallet is false, show logout message
-  if (hasPrivyWalletParam === 'false') {
+  // If hasPrivyWallet is false and we've logged out, show message
+  if (hasPrivyWalletParam === 'false' && !authenticated) {
     return (
       <div className="app-container">
         <div className="auth-container">
           <div className="auth-card">
             <h1 className="app-title">⚠️ No Privy Wallet</h1>
             <p className="app-subtitle">
-              You don't have a Privy wallet. You have been logged out.
+              You don't have a Privy wallet. Please sign up or login to create one.
             </p>
-            <button
-              className="btn btn-primary"
-              onClick={() => navigate('/')}
-            >
-              Go to Home
-            </button>
+            <div className="auth-buttons">
+              <button
+                className="btn btn-primary"
+                onClick={handleSignup}
+                disabled={signupLoading || loginLoading}
+              >
+                {signupLoading ? 'Signing up...' : 'Sign Up with Passkey'}
+              </button>
+              <button
+                className="btn btn-secondary"
+                onClick={handleLogin}
+                disabled={signupLoading || loginLoading}
+              >
+                {loginLoading ? 'Logging in...' : 'Login with Passkey'}
+              </button>
+            </div>
+            <div style={{ marginTop: '20px' }}>
+              <button
+                className="btn btn-secondary"
+                onClick={() => navigate('/')}
+              >
+                Back to Home
+              </button>
+            </div>
           </div>
         </div>
       </div>
