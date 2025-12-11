@@ -3,7 +3,8 @@ import { createRoot } from 'react-dom/client'
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import { PrivyProvider } from '@privy-io/react-auth'
 import './styles/index.css'
-import App from './pages/App'
+import Home from './pages/Home'
+import CreateWallet from './pages/CreateWallet'
 import SignTransaction from './pages/SignTransaction'
 import SolanaSignTransaction from './pages/SolanaSignTransaction'
 import EvmSignMessage from './pages/EvmSignMessage'
@@ -60,7 +61,8 @@ createRoot(rootElement).render(
     >
       <BrowserRouter>
         <Routes>
-          <Route path="/" element={<App />} />
+          <Route path="/" element={<Home />} />
+          <Route path="/createWallet" element={<CreateWallet />} />
           <Route path="/signTransaction" element={<SignTransaction />} />
           <Route path="/evm/signMessage" element={<EvmSignMessage />} />
           <Route path="/solana/signTransaction" element={<SolanaSignTransaction />} />
