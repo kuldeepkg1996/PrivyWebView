@@ -272,14 +272,6 @@ function CreateWallet() {
                 {loginLoading ? 'Logging in...' : 'Login with Passkey'}
               </button>
             </div>
-            <div style={{ marginTop: '20px' }}>
-              <button
-                className="btn btn-secondary"
-                onClick={() => navigate('/')}
-              >
-                Back to Home
-              </button>
-            </div>
           </div>
         </div>
       </div>
