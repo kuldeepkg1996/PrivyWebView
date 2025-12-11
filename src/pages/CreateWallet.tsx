@@ -78,7 +78,7 @@ function CreateWallet() {
     }
     
     setHasCheckedSearchParams(true);
-  }, [privyReady, authenticated, hasPrivyWalletParam, hasCheckedSearchParams, logout]);
+  }, []);
 
   // ✅ Ensure EVM + Solana + Tron wallets exist, then send to native
   useEffect(() => {
