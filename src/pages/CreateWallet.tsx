@@ -284,9 +284,9 @@ function CreateWallet() {
       <div className="app-container">
         <div className="auth-container">
           <div className="auth-card">
-            <h1 className="app-title">⚠️ No Privy Wallet</h1>
+            <h1 className="app-title">⚠️ No OrbitXPay Wallet</h1>
             <p className="app-subtitle">
-              You don't have a Privy wallet. Please sign up or login to create one.
+              You don't have a OrbitXPay wallet. Please sign up or login to create one.
             </p>
             <div className="auth-buttons">
               <button

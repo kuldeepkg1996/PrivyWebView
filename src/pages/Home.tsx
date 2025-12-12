@@ -21,7 +21,7 @@ function Home() {
     <div className="app-container">
       <div className="auth-container">
         <div className="auth-card">
-          <h1 className="app-title">🔐 Privy Wallet</h1>
+          <h1 className="app-title">🔐 OrbitXPay Wallet</h1>
           <p className="app-subtitle">
             Welcome to your self-custodial wallet management system
           </p>
