@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { usePrivy, useLoginWithPasskey, useSignupWithPasskey } from '@privy-io/react-auth';
+import { usePrivy, useLoginWithPasskey } from '@privy-io/react-auth';
 import { useExportWallet as useSolanaExportWallet } from '@privy-io/react-auth/solana';
 import { FiCopy, FiCheck } from 'react-icons/fi';
 import arrowLeftIcon from '../assets/ArrowLeft.svg';
@@ -20,12 +20,14 @@ function Profile() {
   const [showExportModal, setShowExportModal] = useState(false);
   const [selectedWalletForExport, setSelectedWalletForExport] = useState<any | null>(null);
   const [loginLoading, setLoginLoading] = useState(false);
-  const [signupLoading, setSignupLoading] = useState(false);
   const [hasCheckedWalletAddress, setHasCheckedWalletAddress] = useState(false);
 
   const { loginWithPasskey } = useLoginWithPasskey({
     onComplete: () => {
       setLoginLoading(false);
+      // Reset the check flag and auto-export trigger so it can check wallet address after login
+      setHasCheckedWalletAddress(false);
+      setAutoExportTriggered(false);
     },
     onError: () => {
       setError('Failed to login with passkey');
@@ -33,15 +35,13 @@ function Profile() {
     },
   });
 
-  const { signupWithPasskey } = useSignupWithPasskey({
-    onComplete: () => {
-      setSignupLoading(false);
-    },
-    onError: () => {
-      setError('Failed to signup with passkey');
-      setSignupLoading(false);
-    },
-  });
+  // Reset flags when authentication state changes
+  useEffect(() => {
+    if (!authenticated) {
+      setHasCheckedWalletAddress(false);
+      setAutoExportTriggered(false);
+    }
+  }, [authenticated]);
 
   const handleCopy = async (text: string, fieldName: string) => {
     try {
@@ -54,19 +54,27 @@ function Profile() {
   };
 
   // Check if incoming walletAddress matches current wallet addresses, logout if not
+  // Also open modal after login if wallet address matches
   useEffect(() => {
-    if (!ready || hasCheckedWalletAddress) return;
+    if (!ready) return;
 
     const walletAddressParam = searchParams.get('walletAddress');
     
     // If no walletAddress param, proceed normally
     if (!walletAddressParam) {
-      setHasCheckedWalletAddress(true);
+      if (!hasCheckedWalletAddress) {
+        setHasCheckedWalletAddress(true);
+      }
       return;
     }
 
     // If not authenticated, wait for authentication
     if (!authenticated || !user) {
+      return;
+    }
+
+    // Skip if already checked and modal already triggered
+    if (hasCheckedWalletAddress && autoExportTriggered) {
       return;
     }
 
@@ -183,19 +191,9 @@ function Profile() {
                   setLoginLoading(true);
                   loginWithPasskey();
                 }} 
-                disabled={loginLoading || signupLoading}
+                disabled={loginLoading}
               >
                 {loginLoading ? 'Logging in...' : 'Login with Passkey'}
-              </button>
-              <button 
-                className="btn btn-secondary" 
-                onClick={() => {
-                  setSignupLoading(true);
-                  signupWithPasskey();
-                }} 
-                disabled={loginLoading || signupLoading}
-              >
-                {signupLoading ? 'Signing up...' : 'Sign Up with Passkey'}
               </button>
             </div>
           </div>
