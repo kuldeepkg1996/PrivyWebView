@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { usePrivy } from '@privy-io/react-auth';
+import { usePrivy, useLoginWithPasskey, useSignupWithPasskey } from '@privy-io/react-auth';
 import { useExportWallet as useSolanaExportWallet } from '@privy-io/react-auth/solana';
 import { FiCopy, FiCheck } from 'react-icons/fi';
 import arrowLeftIcon from '../assets/ArrowLeft.svg';
@@ -11,7 +11,7 @@ import '../styles/Profile.css';
 function Profile() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const { user, authenticated, ready, exportWallet: exportWalletEvm } = usePrivy();
+  const { user, authenticated, ready, exportWallet: exportWalletEvm, logout } = usePrivy();
   const { exportWallet: exportSolanaWallet } = useSolanaExportWallet();
 
   const [copiedField, setCopiedField] = useState('');
@@ -19,6 +19,29 @@ function Profile() {
   const [autoExportTriggered, setAutoExportTriggered] = useState(false);
   const [showExportModal, setShowExportModal] = useState(false);
   const [selectedWalletForExport, setSelectedWalletForExport] = useState<any | null>(null);
+  const [loginLoading, setLoginLoading] = useState(false);
+  const [signupLoading, setSignupLoading] = useState(false);
+  const [hasCheckedWalletAddress, setHasCheckedWalletAddress] = useState(false);
+
+  const { loginWithPasskey } = useLoginWithPasskey({
+    onComplete: () => {
+      setLoginLoading(false);
+    },
+    onError: () => {
+      setError('Failed to login with passkey');
+      setLoginLoading(false);
+    },
+  });
+
+  const { signupWithPasskey } = useSignupWithPasskey({
+    onComplete: () => {
+      setSignupLoading(false);
+    },
+    onError: () => {
+      setError('Failed to signup with passkey');
+      setSignupLoading(false);
+    },
+  });
 
   const handleCopy = async (text: string, fieldName: string) => {
     try {
@@ -30,31 +53,58 @@ function Profile() {
     }
   };
 
-  // Auto-trigger export wallet modal if walletAddress query param is present
+  // Check if incoming walletAddress matches current wallet addresses, logout if not
   useEffect(() => {
-    if (!authenticated || !ready || !user || autoExportTriggered) return;
+    if (!ready || hasCheckedWalletAddress) return;
 
     const walletAddressParam = searchParams.get('walletAddress');
-    if (!walletAddressParam) return;
-
-    // Find the wallet that matches the address
-    const normalizedParam = walletAddressParam.toLowerCase();
-    const matchedWallet: any = user.linkedAccounts?.find(
-      (account: any) => 
-        account.type === 'wallet' && 
-        account.address &&
-        account.address.toLowerCase() === normalizedParam
-    );
-
-    setAutoExportTriggered(true);
     
-    // Show modal with wallet (or null if not found)
-    setTimeout(() => {
-      setSelectedWalletForExport(matchedWallet || null);
-      setShowExportModal(true);
-    }, 500);
+    // If no walletAddress param, proceed normally
+    if (!walletAddressParam) {
+      setHasCheckedWalletAddress(true);
+      return;
+    }
+
+    // If not authenticated, wait for authentication
+    if (!authenticated || !user) {
+      return;
+    }
+
+    // Check if the incoming walletAddress matches any of the user's wallet addresses
+    const normalizedParam = walletAddressParam.toLowerCase();
+    const allWalletAddresses = user.linkedAccounts
+      ?.filter((account: any) => account.type === 'wallet' && account.address)
+      .map((account: any) => account.address.toLowerCase()) || [];
+
+    const walletMatches = allWalletAddresses.includes(normalizedParam);
+
+    setHasCheckedWalletAddress(true);
+
+    // If wallet address doesn't match, logout
+    if (!walletMatches) {
+      logout();
+      return;
+    }
+
+    // If wallet matches, proceed with auto-export logic
+    if (!autoExportTriggered) {
+      const matchedWallet: any = user.linkedAccounts?.find(
+        (account: any) => 
+          account.type === 'wallet' && 
+          account.address &&
+          account.address.toLowerCase() === normalizedParam
+      );
+
+      setAutoExportTriggered(true);
+      
+      // Show modal with wallet
+      setTimeout(() => {
+        setSelectedWalletForExport(matchedWallet || null);
+        setShowExportModal(true);
+      }, 500);
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [authenticated, ready, user, searchParams, autoExportTriggered]);
+  }, [authenticated, ready, user, searchParams, hasCheckedWalletAddress, autoExportTriggered, logout]);
 
   const handleExportWallet = async (address: string, chainType: string) => {
     try {
@@ -108,9 +158,50 @@ function Profile() {
     );
   }
 
+  // Show Passkey login UI if not authenticated
   if (!authenticated || !user) {
-    navigate('/');
-    return null;
+    return (
+      <div className="profile-container">
+        <div className="profile-card">
+          <div className="profile-header">
+            <button className="btn-back" onClick={() => navigate('/')}>
+              <img src={arrowLeftIcon} width={20} height={20} />
+              Back
+            </button>
+            <h1 className="profile-title">Wallet Profile</h1>
+          </div>
+          <div className="profile-section">
+            <h2 className="section-title">Login Required</h2>
+            <p style={{ marginBottom: '20px', color: '#888' }}>
+              Please login with Passkey to view your wallet profile
+            </p>
+            {error && <div className="error-message">{error}</div>}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+              <button 
+                className="btn btn-primary" 
+                onClick={() => {
+                  setLoginLoading(true);
+                  loginWithPasskey();
+                }} 
+                disabled={loginLoading || signupLoading}
+              >
+                {loginLoading ? 'Logging in...' : 'Login with Passkey'}
+              </button>
+              <button 
+                className="btn btn-secondary" 
+                onClick={() => {
+                  setSignupLoading(true);
+                  signupWithPasskey();
+                }} 
+                disabled={loginLoading || signupLoading}
+              >
+                {signupLoading ? 'Signing up...' : 'Sign Up with Passkey'}
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
   }
 
   const CopyButton = ({ text, fieldName }: { text: string; fieldName: string }) => (
