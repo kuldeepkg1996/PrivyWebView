@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import { useSearchParams, useNavigate } from 'react-router-dom';
+import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   usePrivy,
   useWallets as useEvmWallets,
@@ -17,6 +17,8 @@ import { useCreateWallet as useOtherWallets } from '@privy-io/react-auth/extende
 import '../styles/App.css';
 import { ensureAllWallets } from '../utils/walletManager';
 
+const INIT_TIMEOUT_MS = 10000;
+
 function CreateWallet() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
@@ -25,10 +27,7 @@ function CreateWallet() {
   const [error, setError] = useState('');
   const [initTimeout, setInitTimeout] = useState(false);
   const [hasRedirected, setHasRedirected] = useState(false);
-  const [hasCheckedSearchParams, setHasCheckedSearchParams] = useState(false);
   const [hasLoggedOut, setHasLoggedOut] = useState(false);
-  const [isFreshLogin, setIsFreshLogin] = useState(true); // Default true - allow wallet creation for new logins
-  const [searchParams] = useSearchParams();
 
   const { authenticated, ready: privyReady, user, logout } = usePrivy();
   const { createWallet: createOtherWallet } = useOtherWallets();
@@ -41,11 +40,20 @@ function CreateWallet() {
   const { wallets: solanaWallets, ready: solanaWalletsReady } = useSolanaWallets();
   const { createWallet: createSolanaWallet } = useCreateSolanaWallet();
 
-  const allWalletsReady = evmWalletsReady && solanaWalletsReady;
+  const allWalletsReady = useMemo(
+    () => evmWalletsReady && solanaWalletsReady,
+    [evmWalletsReady, solanaWalletsReady]
+  );
+
+  const isSystemReady = useMemo(
+    () => allWalletsReady && privyReady,
+    [allWalletsReady, privyReady]
+  );
 
   const { signupWithPasskey } = useSignupWithPasskey({
     onComplete: () => {
       setSignupLoading(false);
+      setError('');
     },
     onError: () => {
       setError('Failed to signup with passkey');
@@ -56,6 +64,7 @@ function CreateWallet() {
   const { loginWithPasskey } = useLoginWithPasskey({
     onComplete: () => {
       setLoginLoading(false);
+      setError('');
     },
     onError: () => {
       setError('Failed to login with passkey');
@@ -63,57 +72,32 @@ function CreateWallet() {
     },
   });
 
-  const hasPrivyWalletParam = searchParams.get('hasPrivyWallet');
-
-  // Logout immediately when user comes to this page if authenticated
+  // Always logout user on page load (no session checking)
   useEffect(() => {
-    if (!privyReady) return;
-    if (hasCheckedSearchParams) return;
-    
-    // Logout if authenticated (always logout on this page)
-    if (authenticated) {
-      const performLogout = async () => {
-        try {
-          await logout();
-          setHasLoggedOut(true);
-          setHasRedirected(false); // Reset redirect flag
-          setIsFreshLogin(false); // Reset fresh login flag - will be set to true after new login
-        } catch (err) {
-          console.error('Logout error:', err);
-          // Even if logout fails, mark as logged out to proceed
-          setHasLoggedOut(true);
-          setIsFreshLogin(false);
-        }
-      };
-      performLogout();
-    }
-    
-    setHasCheckedSearchParams(true);
-  }, [privyReady, authenticated, hasCheckedSearchParams, logout]);
+    if (!privyReady || hasLoggedOut) return;
 
-  // Track when user logs in after logout (fresh login)
-  // Also allow wallet creation if user was never authenticated (fresh login = true by default)
-  useEffect(() => {
-    if (!privyReady) return;
-    // If we've logged out and now user is authenticated, this is a fresh login
-    if (hasLoggedOut && authenticated && !isFreshLogin) {
-      setIsFreshLogin(true);
-    }
-    // If user was never authenticated (no logout happened), keep isFreshLogin as true
-  }, [privyReady, hasLoggedOut, authenticated, isFreshLogin]);
+    const performLogout = async () => {
+      try {
+        await logout();
+        setHasRedirected(false);
+        setError('');
+        setHasLoggedOut(true);
+      } catch (err) {
+        console.error('Logout error:', err);
+        // Even if logout fails, mark as logged out to proceed
+        setHasLoggedOut(true);
+      }
+    };
 
-  // ✅ Ensure EVM + Solana + Tron wallets exist, then send to native
+    performLogout();
+  }, [privyReady, hasLoggedOut, logout]);
+
+  // ✅ Ensure EVM + Solana + Tron wallets exist, then redirect to redirect page
   // Only run after user has logged in/signed up (after initial logout)
   useEffect(() => {
-    if (!authenticated) return;
-    if (!allWalletsReady) return;
-    if (hasRedirected) return;
-    if (loading) return;
-    if (hasPrivyWalletParam === 'false') return; // Don't create wallets if hasPrivyWallet is false
-    // Only create wallets if we've completed the initial check (logout if needed)
-    if (!hasCheckedSearchParams) return;
-    // Only create wallets after a fresh login (after logout)
-    if (!isFreshLogin) return;
+    if (!authenticated || !allWalletsReady || hasRedirected || loading || !hasLoggedOut) {
+      return;
+    }
 
     const ensureWalletsAndSend = async () => {
       setLoading(true);
@@ -138,17 +122,18 @@ function CreateWallet() {
           throw new Error(result.error || 'Failed to create wallet(s)');
         }
 
-        // Wallets generated successfully - redirect to app
+        // Redirect to redirect page with redirect URL
+        const redirectUrl = `orbitxpay://walletscreen?evmAddress=${encodeURIComponent(result.evmAddress || '')}&solanaAddress=${encodeURIComponent(result.solanaAddress || '')}&tronAddress=${encodeURIComponent(result.tronAddress || '')}`;
         setHasRedirected(true);
-      } catch (err: any) {
-        setError(err?.message || 'Failed to create wallet(s)');
-      } finally {
+        navigate(`/redirect?url=${encodeURIComponent(redirectUrl)}`);
+      } catch (err) {
+        const errorMessage = err instanceof Error ? err.message : 'Failed to create wallet(s)';
+        setError(errorMessage);
         setLoading(false);
       }
     };
 
     ensureWalletsAndSend();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     authenticated,
     allWalletsReady,
@@ -159,49 +144,54 @@ function CreateWallet() {
     createOtherWallet,
     hasRedirected,
     user,
-    hasPrivyWalletParam,
+    loading,
     hasLoggedOut,
-    hasCheckedSearchParams,
-    isFreshLogin
+    navigate,
   ]);
 
-  /**
-   * Loading timeout (10s)
-   */
+  // Loading timeout handler
   useEffect(() => {
+    if (isSystemReady) return;
+
     const timer = setTimeout(() => {
-      if (!allWalletsReady && !privyReady) {
+      if (!isSystemReady) {
         setInitTimeout(true);
       }
-    }, 10000);
+    }, INIT_TIMEOUT_MS);
 
     return () => clearTimeout(timer);
-  }, [allWalletsReady, privyReady]);
+  }, [isSystemReady]);
 
-  const handleSignup = async () => {
+  const handleSignup = useCallback(async () => {
+    if (signupLoading || loginLoading) return;
+    
     setSignupLoading(true);
     setError('');
     try {
       await signupWithPasskey();
-    } catch (err: any) {
-      setError(err?.message || 'Signup failed');
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Signup failed';
+      setError(errorMessage);
       setSignupLoading(false);
     }
-  };
+  }, [signupWithPasskey, signupLoading, loginLoading]);
 
-  const handleLogin = async () => {
+  const handleLogin = useCallback(async () => {
+    if (signupLoading || loginLoading) return;
+    
     setLoginLoading(true);
     setError('');
     try {
       await loginWithPasskey();
-    } catch (err: any) {
-      setError(err?.message || 'Login failed');
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Login failed';
+      setError(errorMessage);
       setLoginLoading(false);
     }
-  };
+  }, [loginWithPasskey, signupLoading, loginLoading]);
 
-  // Show loading if system or wallets aren't ready
-  if ((!allWalletsReady || !privyReady) && !initTimeout) {
+  // Early returns for different states
+  if (!isSystemReady && !initTimeout) {
     return (
       <div className="app-container">
         <div className="loading-container">
@@ -212,7 +202,7 @@ function CreateWallet() {
     );
   }
 
-  if (initTimeout && (!allWalletsReady || !privyReady)) {
+  if (initTimeout && !isSystemReady) {
     return (
       <div className="app-container">
         <div className="auth-container">
@@ -233,18 +223,17 @@ function CreateWallet() {
     );
   }
 
-  // Show logout in progress if we're logging out
-  if (hasLoggedOut && authenticated && privyReady) {
+  if (!hasLoggedOut && privyReady) {
     return (
       <div className="app-container">
         <div className="loading-container">
           <div className="spinner" />
+          <p>Logging out...</p>
         </div>
       </div>
     );
   }
 
-  // Not authenticated - show login/signup
   if (!authenticated) {
     return (
       <div className="app-container">
@@ -255,7 +244,11 @@ function CreateWallet() {
               Secure Web3 Authentication with Passkeys and generate your EVM +
               Solana self-custodial wallets
             </p>
-            {error && <div className="error-message">{error}</div>}
+            {error && (
+              <div className="error-message" role="alert">
+                {error}
+              </div>
+            )}
             <div className="auth-buttons">
               <button
                 className="btn btn-primary"
@@ -270,46 +263,6 @@ function CreateWallet() {
                 disabled={signupLoading || loginLoading}
               >
                 {loginLoading ? 'Logging in...' : 'Login with Passkey'}
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  // If hasPrivyWallet is false and we've logged out, show message
-  if (hasPrivyWalletParam === 'false' && !authenticated) {
-    return (
-      <div className="app-container">
-        <div className="auth-container">
-          <div className="auth-card">
-            <h1 className="app-title">⚠️ No OrbitXPay Wallet</h1>
-            <p className="app-subtitle">
-              You don't have a OrbitXPay wallet. Please sign up or login to create one.
-            </p>
-            <div className="auth-buttons">
-              <button
-                className="btn btn-primary"
-                onClick={handleSignup}
-                disabled={signupLoading || loginLoading}
-              >
-                {signupLoading ? 'Signing up...' : 'Sign Up with Passkey'}
-              </button>
-              <button
-                className="btn btn-secondary"
-                onClick={handleLogin}
-                disabled={signupLoading || loginLoading}
-              >
-                {loginLoading ? 'Logging in...' : 'Login with Passkey'}
-              </button>
-            </div>
-            <div style={{ marginTop: '20px' }}>
-              <button
-                className="btn btn-secondary"
-                onClick={() => navigate('/')}
-              >
-                Back to Home
               </button>
             </div>
           </div>
@@ -325,7 +278,7 @@ function CreateWallet() {
         <div className="spinner" />
         <p>Preparing your wallets and redirecting...</p>
         {error && (
-          <div className="error-message" style={{ marginTop: '20px' }}>
+          <div className="error-message" style={{ marginTop: '20px' }} role="alert">
             {error}
           </div>
         )}

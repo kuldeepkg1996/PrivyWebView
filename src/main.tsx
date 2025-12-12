@@ -5,6 +5,7 @@ import { PrivyProvider } from '@privy-io/react-auth'
 import './styles/index.css'
 import Home from './pages/Home'
 import CreateWallet from './pages/CreateWallet'
+import RedirectPage from './pages/RedirectPage'
 import SignTransaction from './pages/SignTransaction'
 import SolanaSignTransaction from './pages/SolanaSignTransaction'
 import EvmSignMessage from './pages/EvmSignMessage'
@@ -63,6 +64,7 @@ createRoot(rootElement).render(
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/createWallet" element={<CreateWallet />} />
+          <Route path="/redirect" element={<RedirectPage />} />
           <Route path="/signTransaction" element={<SignTransaction />} />
           <Route path="/evm/signMessage" element={<EvmSignMessage />} />
           <Route path="/solana/signTransaction" element={<SolanaSignTransaction />} />
