@@ -25,7 +25,7 @@ import { ensureAllWallets } from '../utils/walletManager';
 function SignTransaction() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const { authenticated, ready, user } = usePrivy();
+  const { authenticated, ready, user, logout } = usePrivy();
   const { wallets: evmWallets } = useEvmWallets();
   const { wallets: solanaWallets } = useSolanaWallets();
   const { sendTransaction } = useSendTransaction();
@@ -38,11 +38,12 @@ function SignTransaction() {
   const [loginLoading, setLoginLoading] = useState(false);
   const [error, setError] = useState('');
   const [txHash, setTxHash] = useState('');
-  const [showLoginPrompt, setShowLoginPrompt] = useState(false);
   const [switchingNetwork, setSwitchingNetwork] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [walletsReady, setWalletsReady] = useState(false);
   const [txStatus, setTxStatus] = useState<'idle' | 'pending' | 'success' | 'failed'>('idle');
+  const [hasCheckedWalletAddress, setHasCheckedWalletAddress] = useState(false);
+  const [walletAddressValid, setWalletAddressValid] = useState(false);
 
   // query params
   const network = searchParams.get('network') || 'ethereum';
@@ -53,11 +54,14 @@ function SignTransaction() {
   const fee = searchParams.get('fee') || '';
   const recipientAddress = searchParams.get('recipientAddress') || '';
   const chainId = searchParams.get('chainId') || '1';
+  const walletAddress = searchParams.get('walletAddress') || '';
 
   const { loginWithPasskey } = useLoginWithPasskey({
     onComplete: () => {
-      setShowLoginPrompt(false);
       setLoginLoading(false);
+      // Reset wallet address check after login
+      setHasCheckedWalletAddress(false);
+      setWalletAddressValid(false);
       // Don't set walletsReady here - let the useEffect handle it
     },
     onError: (_) => {
@@ -68,8 +72,10 @@ function SignTransaction() {
 
   const { signupWithPasskey } = useSignupWithPasskey({
     onComplete: () => {
-      setShowLoginPrompt(false);
       setSignupLoading(false);
+      // Reset wallet address check after signup
+      setHasCheckedWalletAddress(false);
+      setWalletAddressValid(false);
       // Don't set walletsReady here - let the useEffect handle it
     },
     onError: (_) => {
@@ -78,11 +84,58 @@ function SignTransaction() {
     },
   });
 
+  // Reset flags when authentication state changes
   useEffect(() => {
-    if (ready && !authenticated) {
-      setShowLoginPrompt(true);
+    if (!authenticated) {
+      setHasCheckedWalletAddress(false);
+      setWalletAddressValid(false);
     }
-  }, [ready, authenticated]);
+  }, [authenticated]);
+
+  // Check if walletAddress from URL exists in user's account
+  useEffect(() => {
+    if (!ready) return;
+
+    // If no walletAddress param, proceed normally (no check needed)
+    if (!walletAddress) {
+      if (!hasCheckedWalletAddress) {
+        setHasCheckedWalletAddress(true);
+        setWalletAddressValid(true); // No wallet address to check, so valid
+      }
+      return;
+    }
+
+    // If not authenticated, wait for authentication
+    if (!authenticated || !user) {
+      return;
+    }
+
+    // Skip if already checked
+    if (hasCheckedWalletAddress) {
+      return;
+    }
+
+    // Check if the incoming walletAddress matches any of the user's wallet addresses
+    const normalizedParam = walletAddress.toLowerCase();
+    const allWalletAddresses = user.linkedAccounts
+      ?.filter((account: any) => account.type === 'wallet' && account.address)
+      .map((account: any) => account.address.toLowerCase()) || [];
+
+    const walletMatches = allWalletAddresses.includes(normalizedParam);
+
+    setHasCheckedWalletAddress(true);
+
+    // If wallet address doesn't match, logout to show login prompt
+    if (!walletMatches) {
+      setWalletAddressValid(false);
+      logout();
+      return;
+    }
+
+    // Wallet matches, proceed with transaction
+    setWalletAddressValid(true);
+  }, [ready, authenticated, user, walletAddress, hasCheckedWalletAddress, logout]);
+
 
   // Wait for wallets to be ready after authentication and create if needed
   useEffect(() => {
@@ -328,13 +381,18 @@ function SignTransaction() {
     );
   }
 
-  if (showLoginPrompt && !authenticated) {
+  // Show login prompt if not authenticated OR if wallet address doesn't match
+  const shouldShowLoginPrompt = !authenticated || (walletAddress && hasCheckedWalletAddress && !walletAddressValid);
+
+  if (shouldShowLoginPrompt) {
     return (
       <div className="sign-tx-container centered">
         <div className="sign-tx-card">
           <h1 className="sign-tx-title">🔐 Login Required</h1>
           <p className="login-subtitle">
-            Please login to continue with your transaction
+            {walletAddress && hasCheckedWalletAddress && !walletAddressValid
+              ? 'The wallet address in the URL does not belong to your account. Please login with the correct account.'
+              : 'Please login to continue with your transaction'}
           </p>
 
           <div className="tx-details">
@@ -400,7 +458,8 @@ function SignTransaction() {
   const displayFee = fee || '0.00';
 
   // Show loading while wallets are initializing after login
-  if (authenticated && ready && !walletsReady && !showLoginPrompt) {
+  // Also show loading while checking wallet address
+  if (authenticated && ready && (!walletsReady || (walletAddress && !hasCheckedWalletAddress)) && !shouldShowLoginPrompt) {
     return (
       <div className="sign-tx-container centered">
         <div className="sign-tx-card">
@@ -417,14 +476,17 @@ function SignTransaction() {
   }
 
   // Check if we have the required wallet before showing confirm modal
+  // Also ensure wallet address is valid if it was provided
   const hasRequiredWallet = network.toLowerCase().includes('solana') 
     ? solanaWallets.length > 0 
     : evmWallets.length > 0;
+  
+  const canProceedWithTransaction = hasRequiredWallet && (!walletAddress || walletAddressValid);
 
   return (
     <div className="sign-tx-container">
-      {/* Show login/signup if authenticated but wallet not found */}
-      {authenticated && ready && walletsReady && !hasRequiredWallet && !showLoginPrompt && txStatus === 'idle' && (
+      {/* Show login/signup if authenticated but wallet not found OR wallet address doesn't match */}
+      {authenticated && ready && walletsReady && (!hasRequiredWallet || (walletAddress && !walletAddressValid)) && !shouldShowLoginPrompt && txStatus === 'idle' && (
         <div className="sign-tx-container centered">
           <div className="sign-tx-card">
             <h1 className="sign-tx-title">⚠️ Wallet Not Found</h1>
@@ -489,8 +551,8 @@ function SignTransaction() {
         </div>
       )}
 
-      {/* Confirm Withdraw Modal - Only show when authenticated, ready, wallets loaded AND wallet exists */}
-      {authenticated && ready && walletsReady && hasRequiredWallet && !showLoginPrompt && txStatus === 'idle' && (
+      {/* Confirm Withdraw Modal - Only show when authenticated, ready, wallets loaded AND wallet exists AND wallet address is valid */}
+      {authenticated && ready && walletsReady && canProceedWithTransaction && !shouldShowLoginPrompt && txStatus === 'idle' && (
         <ConfirmModal
           recipientAddress={recipientAddress}
           networkShort={networkShort}
