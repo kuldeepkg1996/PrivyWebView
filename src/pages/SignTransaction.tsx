@@ -4,7 +4,6 @@ import {
   usePrivy,
   useWallets as useEvmWallets,
   useLoginWithPasskey,
-  useSignupWithPasskey,
   useSendTransaction,
   useCreateWallet as useCreateEvmWallet,
 } from '@privy-io/react-auth';
@@ -34,7 +33,6 @@ function SignTransaction() {
   const { createWallet: createOtherWallet } = useCreateOtherWallet();
 
   const [loading, setLoading] = useState(false);
-  const [signupLoading, setSignupLoading] = useState(false);
   const [loginLoading, setLoginLoading] = useState(false);
   const [error, setError] = useState('');
   const [txHash, setTxHash] = useState('');
@@ -70,19 +68,6 @@ function SignTransaction() {
     },
   });
 
-  const { signupWithPasskey } = useSignupWithPasskey({
-    onComplete: () => {
-      setSignupLoading(false);
-      // Reset wallet address check after signup
-      setHasCheckedWalletAddress(false);
-      setWalletAddressValid(false);
-      // Don't set walletsReady here - let the useEffect handle it
-    },
-    onError: (_) => {
-      setError('Failed to sign up with passkey');
-      setSignupLoading(false);
-    },
-  });
 
   // Reset flags when authentication state changes
   useEffect(() => {
@@ -358,17 +343,6 @@ function SignTransaction() {
     }
   };
 
-  const handleSignup = async () => {
-    setSignupLoading(true);
-    setError('');
-    try {
-      await signupWithPasskey();
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Signup failed';
-      setError(errorMessage);
-      setSignupLoading(false);
-    }
-  };
 
   if (!ready) {
     return (
@@ -426,23 +400,16 @@ function SignTransaction() {
             <button
               className="btn btn-primary"
               onClick={handleLogin}
-              disabled={loginLoading || signupLoading}
+              disabled={loginLoading}
             >
               {loginLoading ? 'Logging in...' : 'Login with Passkey'}
-            </button>
-            <button
-              className="btn btn-secondary"
-              onClick={handleSignup}
-              disabled={loginLoading || signupLoading}
-            >
-              {signupLoading ? 'Signing up...' : 'Sign Up with Passkey'}
             </button>
           </div>
 
           <button
             className="btn-cancel-link"
             onClick={handleCancel}
-            disabled={loginLoading || signupLoading}
+            disabled={loginLoading}
           >
             Cancel Transaction
           </button>
@@ -485,7 +452,7 @@ function SignTransaction() {
 
   return (
     <div className="sign-tx-container">
-      {/* Show login/signup if authenticated but wallet not found OR wallet address doesn't match */}
+      {/* Show login if authenticated but wallet not found OR wallet address doesn't match */}
       {authenticated && ready && walletsReady && (!hasRequiredWallet || (walletAddress && !walletAddressValid)) && !shouldShowLoginPrompt && txStatus === 'idle' && (
         <div className="sign-tx-container centered">
           <div className="sign-tx-card">
@@ -528,14 +495,7 @@ function SignTransaction() {
                 onClick={handleLogin}
                 disabled={loading}
               >
-                {loading ? 'Logging in...' : 'Try Login Again'}
-              </button>
-              <button
-                className="btn btn-secondary"
-                onClick={handleSignup}
-                disabled={loading}
-              >
-                {loading ? 'Signing up...' : 'Create New Account'}
+                {loading ? 'Logging in...' : 'Login with Passkey'}
               </button>
             </div>
 
