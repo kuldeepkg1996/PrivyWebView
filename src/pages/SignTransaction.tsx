@@ -278,6 +278,7 @@ function SignTransaction() {
 
     const result = await sendTransaction(txRequest, {
       address: selectedWallet.address,
+      sponsor:true,
     });
 
     const hash =

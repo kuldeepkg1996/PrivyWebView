@@ -5,14 +5,31 @@
 export const sendWalletsToNative = (
   evmAddress: string, 
   solanaAddress: string, 
-  tronAddress?: string
+  tronAddress?: string,
+  evmWalletId?: string,
+  solanaWalletId?: string,
+  tronWalletId?: string
 ): void => {
   try {
+    // Create structured wallet objects
+    const evmWallet = JSON.stringify({
+      evmWalletId: evmWalletId || '',
+      evmWalletAddress: evmAddress || ''
+    });
+    const solanaWallet = JSON.stringify({
+      solanaWalletId: solanaWalletId || '',
+      solanaWalletAddress: solanaAddress || ''
+    });
+    const tronWallet = JSON.stringify({
+      tronWalletId: tronWalletId || '',
+      tronWalletAddress: tronAddress || ''
+    });
+
     const url =
       `orbitxpay://walletscreen` +
-      `?evmAddress=${encodeURIComponent(evmAddress || '')}` +
-      `&solanaAddress=${encodeURIComponent(solanaAddress || '')}` +
-      `&tronAddress=${encodeURIComponent(tronAddress || '')}`;
+      `?evm=${encodeURIComponent(evmWallet)}` +
+      `&solana=${encodeURIComponent(solanaWallet)}` +
+      `&tron=${encodeURIComponent(tronWallet)}`;
 
     window.location.href = url;
   } catch (e) {
@@ -25,9 +42,18 @@ export const sendWalletsToNative = (
         JSON.stringify({
           type: 'WALLET_ADDRESS',
           address: evmAddress,
-          evmAddress,
-          solanaAddress,
-          tronAddress: tronAddress || '',
+          evm: {
+            evmWalletId: evmWalletId || '',
+            evmWalletAddress: evmAddress || ''
+          },
+          solana: {
+            solanaWalletId: solanaWalletId || '',
+            solanaWalletAddress: solanaAddress || ''
+          },
+          tron: {
+            tronWalletId: tronWalletId || '',
+            tronWalletAddress: tronAddress || ''
+          },
         }),
       );
     }

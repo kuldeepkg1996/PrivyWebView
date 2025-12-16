@@ -27,6 +27,9 @@ export interface WalletResult {
   evmAddress: string;
   solanaAddress: string;
   tronAddress: string;
+  evmWalletId: string;
+  solanaWalletId: string;
+  tronWalletId: string;
   success: boolean;
   error?: string;
 }
@@ -77,10 +80,17 @@ export async function ensureAllWallets(
       }
     }
 
-    // Extract addresses
+  
+
+    // Extract addresses and IDs
     const evmAddress = evmWallet?.address || '';
     const solanaAddress = solWallet?.address || '';
     const tronAddress = (tronWallet as any)?.address || '';
+    
+    // Extract wallet IDs (Privy wallets have walletId property)
+    const evmWalletId = evmWallet?.walletId || evmWallet?.id || '';
+    const solanaWalletId = solWallet?.walletId || solWallet?.id || '';
+    const tronWalletId = (tronWallet as any)?.walletId || (tronWallet as any)?.id || '';
 
     // Validate at least one wallet exists
     if (!evmAddress && !solanaAddress && !tronAddress) {
@@ -89,13 +99,16 @@ export async function ensureAllWallets(
 
     // Send to native app if requested
     if (sendToNative && (evmAddress || solanaAddress || tronAddress)) {
-      sendWalletsToNative(evmAddress, solanaAddress, tronAddress);
+      sendWalletsToNative(evmAddress, solanaAddress, tronAddress, evmWalletId, solanaWalletId, tronWalletId);
     }
 
     return {
       evmAddress,
       solanaAddress,
       tronAddress,
+      evmWalletId,
+      solanaWalletId,
+      tronWalletId,
       success: true,
     };
   } catch (err: any) {
@@ -103,6 +116,9 @@ export async function ensureAllWallets(
       evmAddress: '',
       solanaAddress: '',
       tronAddress: '',
+      evmWalletId: '',
+      solanaWalletId: '',
+      tronWalletId: '',
       success: false,
       error: err?.message || 'Failed to create wallets',
     };

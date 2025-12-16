@@ -72,6 +72,8 @@ function CreateWallet() {
     },
   });
 
+  console.log('user===>', user);
+
   // Always logout user on page load (no session checking)
   useEffect(() => {
     if (!privyReady || hasLoggedOut) return;
@@ -117,13 +119,27 @@ function CreateWallet() {
           },
           true // Send to native app
         );
+        console.log('result===>', result);
 
         if (!result.success) {
           throw new Error(result.error || 'Failed to create wallet(s)');
         }
 
-        // Redirect to redirect page with redirect URL
-        const redirectUrl = `orbitxpay://walletscreen?evmAddress=${encodeURIComponent(result.evmAddress || '')}&solanaAddress=${encodeURIComponent(result.solanaAddress || '')}&tronAddress=${encodeURIComponent(result.tronAddress || '')}`;
+        // Redirect to redirect page with redirect URL including wallet IDs in structured format
+        const evmWallet = JSON.stringify({
+          evmWalletId: result.evmWalletId || '',
+          evmWalletAddress: result.evmAddress || ''
+        });
+        const solanaWallet = JSON.stringify({
+          solanaWalletId: result.solanaWalletId || '',
+          solanaWalletAddress: result.solanaAddress || ''
+        });
+        const tronWallet = JSON.stringify({
+          tronWalletId: result.tronWalletId || '',
+          tronWalletAddress: result.tronAddress || ''
+        });
+        
+        const redirectUrl = `orbitxpay://walletscreen?evm=${encodeURIComponent(evmWallet)}&solana=${encodeURIComponent(solanaWallet)}&tron=${encodeURIComponent(tronWallet)}`;
         setHasRedirected(true);
         navigate(`/redirect?url=${encodeURIComponent(redirectUrl)}`);
       } catch (err) {
