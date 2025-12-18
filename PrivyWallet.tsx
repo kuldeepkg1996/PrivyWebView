@@ -10,7 +10,12 @@ function PrivyWallet() {
 
   const getQueryParam = (url: string, key: string): string | null => {
     try {
-      const regex = new RegExp(`[?&]${key}=([^&]+)`);
+      // Improved regex that handles:
+      // 1. Parameter at start (?key=value)
+      // 2. Parameter in middle (&key=value)
+      // 3. Parameter at end (&key=value or ?key=value with no trailing &)
+      // 4. URL-encoded values
+      const regex = new RegExp(`[?&]${key}=([^&]*)`);
       const match = url.match(regex);
       if (match && match[1]) {
         return decodeURIComponent(match[1]);
@@ -20,6 +25,27 @@ function PrivyWallet() {
       console.log('getQueryParam error:', e);
       return null;
     }
+  };
+
+  const parseUrlParams = (url: string): { [key: string]: string } => {
+    const params: { [key: string]: string } = {};
+    try {
+      // Extract query string part
+      const queryString = url.split('?')[1];
+      if (!queryString) return params;
+
+      // Split by & and parse each parameter
+      const pairs = queryString.split('&');
+      pairs.forEach(pair => {
+        const [key, value] = pair.split('=');
+        if (key) {
+          params[key] = value ? decodeURIComponent(value) : '';
+        }
+      });
+    } catch (e) {
+      console.log('parseUrlParams error:', e);
+    }
+    return params;
   };
 
   const startPrivyFlow = async () => {
@@ -55,48 +81,102 @@ function PrivyWallet() {
           forceCloseOnRedirection: false,
         });
 
-        console.log('InAppBrowser openAuth result:', result);
+        console.log('InAppBrowser openAuth result:', JSON.stringify(result, null, 2));
+        console.log('InAppBrowser result type:', result.type);
         console.log('InAppBrowser result URL:', result.url);
 
-        // When web redirects to orbitxpay://walletscreen?userId={...}&evm={...}&solana={...}&tron={...}
+        // When web redirects to orbitxpay://walletscreen?evm={...}&solana={...}&tron={...}&userId={...}
         // OR when running locally: http://localhost:5173/redirect?url=orbitxpay%3A%2F%2Fwalletscreen...&userId=...
         if (result.type === 'success' && result.url) {
           let url = result.url as string;
-          console.log('Full redirect URL from openAuth:', url);
+          console.log('=== URL PROCESSING START ===');
+          console.log('Raw URL from InAppBrowser:', url);
+          console.log('URL length:', url.length);
           console.log('URL includes userId:', url.includes('userId'));
+          console.log('URL includes userId=:', url.includes('userId='));
 
           // Check if this is a redirect page (local development)
           // Format: http://localhost:5173/redirect?url=orbitxpay%3A%2F%2Fwalletscreen%3FuserId%3D...%26evm%3D...
-          if (url.includes('/redirect?url=') || url.includes('/redirect&url=')) {
+          if (url.includes('/redirect?url=') || url.includes('/redirect&url=') || url.includes('/redirect?url=')) {
+            console.log('Detected redirect page URL');
             // Extract the encoded deep link URL from the redirect page
             const encodedDeepLink = getQueryParam(url, 'url');
+            console.log('Encoded deep link from redirect page:', encodedDeepLink);
+            
             if (encodedDeepLink) {
               // Decode the deep link URL
               url = decodeURIComponent(encodedDeepLink);
               console.log('Decoded deep link URL:', url);
+              console.log('Decoded URL includes userId:', url.includes('userId'));
+            } else {
+              console.error('ERROR: Could not extract encoded deep link from redirect page URL');
             }
-
-            // Extract privyUserId from the decoded deep link URL (userId is inside the deep link, not the redirect page URL)
-            const privyUserId = getQueryParam(url, 'userId');
-            console.log('Extracted privyUserId from decoded deep link URL:', privyUserId);
-
-            // Pass the decoded deep link URL and privyUserId to Wallet screen
-            navigation.navigate('walletscreen', {
-              url: url,
-              userId: privyUserId,
-            });
-            return;
           }
 
-          // Direct deep link (production)
-          // Extract privyUserId from deep link URL if present
-          const privyUserId = getQueryParam(url, 'userId');
-          console.log('Extracted privyUserId from deep link URL:', privyUserId);
+          // Parse all URL parameters for debugging
+          const allParams = parseUrlParams(url);
+          console.log('All URL parameters:', JSON.stringify(allParams, null, 2));
+          console.log('Parameter keys:', Object.keys(allParams));
+
+          // Extract privyUserId from the URL (try both methods)
+          let privyUserId = getQueryParam(url, 'userId');
+          if (!privyUserId && allParams.userId) {
+            privyUserId = allParams.userId;
+            console.log('Extracted userId from parsed params:', privyUserId);
+          }
+          
+          // FALLBACK: If userId is not in query params (InAppBrowser limitation),
+          // extract it from wallet JSON objects where we encoded it
+          if (!privyUserId) {
+            console.log('userId not found in query params, trying to extract from wallet objects...');
+            try {
+              // Try to extract from evm wallet object
+              if (allParams.evm) {
+                const evmWallet = JSON.parse(allParams.evm);
+                if (evmWallet.userId) {
+                  privyUserId = evmWallet.userId;
+                  console.log('Extracted userId from evm wallet object:', privyUserId);
+                }
+              }
+              
+              // If still not found, try solana wallet object
+              if (!privyUserId && allParams.solana) {
+                const solanaWallet = JSON.parse(allParams.solana);
+                if (solanaWallet.userId) {
+                  privyUserId = solanaWallet.userId;
+                  console.log('Extracted userId from solana wallet object:', privyUserId);
+                }
+              }
+              
+              // If still not found, try tron wallet object
+              if (!privyUserId && allParams.tron) {
+                const tronWallet = JSON.parse(allParams.tron);
+                if (tronWallet.userId) {
+                  privyUserId = tronWallet.userId;
+                  console.log('Extracted userId from tron wallet object:', privyUserId);
+                }
+              }
+            } catch (parseError) {
+              console.error('Error parsing wallet objects to extract userId:', parseError);
+            }
+          }
+          
+          console.log('Final extracted privyUserId:', privyUserId);
+          console.log('=== URL PROCESSING END ===');
+
+          if (!privyUserId) {
+            console.error('ERROR: userId not found in URL or wallet objects!');
+            console.error('Full URL was:', url);
+            console.error('All parameters:', allParams);
+            console.error('This should not happen - userId is encoded in wallet objects');
+          } else {
+            console.log('✅ Successfully extracted userId:', privyUserId);
+          }
 
           // Pass the full URL and privyUserId to Wallet screen so it can parse JSON-encoded parameters
           navigation.navigate('walletscreen', {
             url: url,
-            userId: privyUserId,
+            userId: privyUserId || null,
           });
           return;
         }

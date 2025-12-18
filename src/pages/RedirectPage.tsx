@@ -57,9 +57,26 @@ function RedirectPage() {
           return; // Don't redirect if userId is missing
         }
         
-        // Use window.location.replace for more reliable redirects (doesn't add to history)
+        // Try multiple redirect methods to ensure InAppBrowser receives the full URL
         console.log('RedirectPage - Executing redirect...');
-        window.location.replace(redirectUrl);
+        
+        // Method 1: Try iframe redirect first (sometimes preserves URL better with InAppBrowser)
+        try {
+          const iframe = document.createElement('iframe');
+          iframe.style.display = 'none';
+          iframe.src = redirectUrl;
+          document.body.appendChild(iframe);
+          console.log('RedirectPage - Used iframe redirect method');
+          
+          // Also try window.location as backup
+          setTimeout(() => {
+            window.location.href = redirectUrl;
+          }, 100);
+        } catch (iframeError) {
+          console.warn('RedirectPage - Iframe redirect failed, using window.location:', iframeError);
+          // Fallback to window.location.replace
+          window.location.replace(redirectUrl);
+        }
       } catch (err) {
         console.error('Redirect error:', err);
         // Don't use fallback - if redirect fails, log error but don't redirect without userId

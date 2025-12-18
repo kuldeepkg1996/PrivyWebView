@@ -125,21 +125,7 @@ function CreateWallet() {
           throw new Error(result.error || 'Failed to create wallet(s)');
         }
 
-        // Redirect to redirect page with redirect URL including wallet IDs in structured format
-        const evmWallet = JSON.stringify({
-          evmWalletId: result.evmWalletId || '',
-          evmWalletAddress: result.evmAddress || ''
-        });
-        const solanaWallet = JSON.stringify({
-          solanaWalletId: result.solanaWalletId || '',
-          solanaWalletAddress: result.solanaAddress || ''
-        });
-        const tronWallet = JSON.stringify({
-          tronWalletId: result.tronWalletId || '',
-          tronWalletAddress: result.tronAddress || ''
-        });
-        
-        // Get userId from user object - Privy user object has 'id' property
+        // Get userId from user object FIRST - Privy user object has 'id' property
         if (!user) {
           console.error('User object is null/undefined when trying to redirect');
           throw new Error('User object not available');
@@ -155,14 +141,31 @@ function CreateWallet() {
         console.log('User.id:', user.id);
         console.log('User.wallet?.id:', user.wallet?.id);
         
+        // ENCODE userId INSIDE each wallet JSON object to avoid InAppBrowser query parameter limitations
+        // This ensures userId is preserved even if InAppBrowser strips query parameters
+        const evmWallet = JSON.stringify({
+          evmWalletId: result.evmWalletId || '',
+          evmWalletAddress: result.evmAddress || '',
+          userId: userId // Include userId in wallet object
+        });
+        const solanaWallet = JSON.stringify({
+          solanaWalletId: result.solanaWalletId || '',
+          solanaWalletAddress: result.solanaAddress || '',
+          userId: userId // Include userId in wallet object
+        });
+        const tronWallet = JSON.stringify({
+          tronWalletId: result.tronWalletId || '',
+          tronWalletAddress: result.tronAddress || '',
+          userId: userId // Include userId in wallet object
+        });
+        
         // Build URL using URLSearchParams to ensure proper encoding and parameter inclusion
         const params = new URLSearchParams();
-        // Always include userId parameter - even if empty, it will be included as empty string
-        // This ensures the parameter is always present in the URL
-        params.set('userId', userId);
+        // Still include userId as separate parameter as fallback, but it's also in each wallet object
         params.set('evm', evmWallet);
         params.set('solana', solanaWallet);
         params.set('tron', tronWallet);
+        params.set('userId', userId); // Keep as separate parameter too for backward compatibility
         
         const redirectUrl = `orbitxpay://walletscreen?${params.toString()}`;
         console.log('Final Redirect URL:', redirectUrl);
