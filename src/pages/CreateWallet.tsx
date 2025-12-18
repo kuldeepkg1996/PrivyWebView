@@ -16,7 +16,6 @@ import { useCreateWallet as useOtherWallets } from '@privy-io/react-auth/extende
 
 import '../styles/App.css';
 import { ensureAllWallets } from '../utils/walletManager';
-import { sendCompleteWalletDataToNative } from '../utils/nativeCommunication';
 
 const INIT_TIMEOUT_MS = 10000;
 
@@ -102,82 +101,6 @@ function CreateWallet() {
       return;
     }
 
-    const ensureWalletsAndSend = async () => {
-      setLoading(true);
-      setError('');
-
-      try {
-        const result = await ensureAllWallets(
-          {
-            evmWallets,
-            solanaWallets,
-            user,
-          },
-          {
-            createEvmWallet,
-            createSolanaWallet,
-            createOtherWallet,
-          },
-          true // Send to native app
-        );
-        console.log('result===>', result);
-
-        if (!result.success) {
-          throw new Error(result.error || 'Failed to create wallet(s)');
-        }
-
-        // Get userId from user object FIRST - Privy user object has 'id' property at top level
-        if (!user) {
-          console.error('User object is null/undefined when trying to redirect');
-          throw new Error('User object not available');
-        }
-        
-        // Extract Privy user ID - it's in user.id (e.g., "did:privy:cmjb7kk7q02dwl10co7f6oda2")
-        // This is the main user identifier from Privy Dashboard
-        const userId = user.id || '';
-        
-        if (!userId) {
-          console.error('❌ ERROR: user.id is empty or undefined!');
-          console.error('User object:', JSON.stringify(user, null, 2));
-          console.error('User.id:', user.id);
-          console.error('User.wallet?.id:', user.wallet?.id);
-          throw new Error('User ID (user.id) is not available');
-        }
-        
-        console.log('✅ Privy User ID extracted:', userId);
-        console.log('User ID type:', typeof userId);
-        console.log('User ID length:', userId.length);
-        console.log('User ID format:', userId.startsWith('did:privy:') ? 'Valid Privy DID format' : 'Unexpected format');
-        console.log('Full User object (first 500 chars):', JSON.stringify(user, null, 2).substring(0, 500));
-        
-        // Use the new utility function that sends data via multiple methods:
-        // 1. postMessage (for WebView - most reliable)
-        // 2. Base64-encoded single parameter (best for InAppBrowser)
-        // 3. Fallback deep link with all parameters
-        console.log('Sending wallet data to native app...');
-        sendCompleteWalletDataToNative(
-          result.evmAddress || '',
-          result.solanaAddress || '',
-          result.tronAddress || '',
-          result.evmWalletId || '',
-          result.solanaWalletId || '',
-          result.tronWalletId || '',
-          userId
-        );
-        
-        setHasRedirected(true);
-        
-        // Navigate to redirect page which will handle the deep link
-        // The sendCompleteWalletDataToNative function already triggers the redirect,
-        // but we keep this for the redirect page UI
-        navigate('/redirect');
-      } catch (err) {
-        const errorMessage = err instanceof Error ? err.message : 'Failed to create wallet(s)';
-        setError(errorMessage);
-        setLoading(false);
-      }
-    };
-
     ensureWalletsAndSend();
   }, [
     authenticated,
@@ -206,6 +129,56 @@ function CreateWallet() {
 
     return () => clearTimeout(timer);
   }, [isSystemReady]);
+
+  const ensureWalletsAndSend = async () => {
+    setLoading(true);
+    setError('');
+
+    try {
+      const result = await ensureAllWallets(
+        {
+          evmWallets,
+          solanaWallets,
+          user,
+        },
+        {
+          createEvmWallet,
+          createSolanaWallet,
+          createOtherWallet,
+        },
+        false // Send to native app
+      );
+      console.log('result===>', result);
+
+      if (!result.success) {
+        throw new Error(result.error || 'Failed to create wallet(s)');
+      }
+
+      // Redirect to redirect page with redirect URL including wallet IDs in structured format
+      const evmWallet = JSON.stringify({
+        evmWalletId: result.evmWalletId || '',
+        evmWalletAddress: result.evmAddress || ''
+      });
+      const solanaWallet = JSON.stringify({
+        solanaWalletId: result.solanaWalletId || '',
+        solanaWalletAddress: result.solanaAddress || ''
+      });
+      const tronWallet = JSON.stringify({
+        tronWalletId: result.tronWalletId || '',
+        tronWalletAddress: result.tronAddress || ''
+      });
+      
+      const userId = user?.id || '';
+      const redirectUrl = `orbitxpay://walletscreen?userId=${encodeURIComponent(userId)}&evm=${encodeURIComponent(evmWallet)}&solana=${encodeURIComponent(solanaWallet)}&tron=${encodeURIComponent(tronWallet)}`;
+      setHasRedirected(true);
+      console.log('redirectUrl===>', redirectUrl);
+      navigate(`/redirect?url=${encodeURIComponent(redirectUrl)}`);
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to create wallet(s)';
+      setError(errorMessage);
+      setLoading(false);
+    }
+  };
 
   const handleSignup = useCallback(async () => {
     if (signupLoading || loginLoading) return;
