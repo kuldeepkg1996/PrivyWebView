@@ -292,11 +292,27 @@ function PrivyWallet() {
               if (allParams.evm) {
                 console.log('Attempting to parse evm wallet...');
                 const evmWallet = parseWalletObject(allParams.evm, 'evm');
+                console.log('Parsed evm wallet:', evmWallet);
+                console.log('EVM wallet keys:', evmWallet ? Object.keys(evmWallet) : 'null');
+                console.log('EVM wallet has userId property:', evmWallet && 'userId' in evmWallet);
+                console.log('EVM wallet userId value:', evmWallet?.userId);
+                console.log('EVM wallet userId type:', typeof evmWallet?.userId);
+                console.log('EVM wallet userId length:', evmWallet?.userId?.length);
+                
+                // Check if userId exists and is valid
                 if (evmWallet && evmWallet.userId) {
-                  privyUserId = evmWallet.userId;
-                  console.log('✅ Extracted userId from evm wallet object:', privyUserId);
+                  const extractedUserId = String(evmWallet.userId).trim();
+                  if (extractedUserId && extractedUserId.length > 0) {
+                    privyUserId = extractedUserId;
+                    console.log('✅ SUCCESS: Extracted Privy userId from evm wallet object:', privyUserId);
+                    console.log('✅ UserId format:', privyUserId.startsWith('did:privy:') ? 'Valid Privy DID' : 'Check format');
+                  } else {
+                    console.log('❌ evm wallet has userId but it is empty');
+                  }
                 } else {
-                  console.log('evm wallet parsed but no userId found. Keys:', evmWallet ? Object.keys(evmWallet) : 'null');
+                  console.log('❌ evm wallet parsed but no userId found.');
+                  console.log('EVM wallet full content:', JSON.stringify(evmWallet, null, 2));
+                  console.log('EVM wallet raw string:', allParams.evm);
                 }
               } else {
                 console.log('evm parameter not found in URL');

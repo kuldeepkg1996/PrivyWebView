@@ -126,21 +126,29 @@ function CreateWallet() {
           throw new Error(result.error || 'Failed to create wallet(s)');
         }
 
-        // Get userId from user object FIRST - Privy user object has 'id' property
+        // Get userId from user object FIRST - Privy user object has 'id' property at top level
         if (!user) {
           console.error('User object is null/undefined when trying to redirect');
           throw new Error('User object not available');
         }
         
-        // Try different possible properties for user ID
-        // Privy user object typically has 'id' property
-        const userId = String(user.id || user.wallet?.id || '').trim();
-        console.log('User ID for redirect:', userId);
+        // Extract Privy user ID - it's in user.id (e.g., "did:privy:cmjb7kk7q02dwl10co7f6oda2")
+        // This is the main user identifier from Privy Dashboard
+        const userId = user.id || '';
+        
+        if (!userId) {
+          console.error('❌ ERROR: user.id is empty or undefined!');
+          console.error('User object:', JSON.stringify(user, null, 2));
+          console.error('User.id:', user.id);
+          console.error('User.wallet?.id:', user.wallet?.id);
+          throw new Error('User ID (user.id) is not available');
+        }
+        
+        console.log('✅ Privy User ID extracted:', userId);
         console.log('User ID type:', typeof userId);
         console.log('User ID length:', userId.length);
-        console.log('Full User object:', JSON.stringify(user, null, 2));
-        console.log('User.id:', user.id);
-        console.log('User.wallet?.id:', user.wallet?.id);
+        console.log('User ID format:', userId.startsWith('did:privy:') ? 'Valid Privy DID format' : 'Unexpected format');
+        console.log('Full User object (first 500 chars):', JSON.stringify(user, null, 2).substring(0, 500));
         
         // Use the new utility function that sends data via multiple methods:
         // 1. postMessage (for WebView - most reliable)
