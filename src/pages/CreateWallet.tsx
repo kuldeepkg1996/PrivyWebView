@@ -139,8 +139,26 @@ function CreateWallet() {
           tronWalletAddress: result.tronAddress || ''
         });
         
-        const userId = user?.id || '';
+        // Get userId from user object - Privy user object has 'id' property
+        if (!user) {
+          console.error('User object is null/undefined when trying to redirect');
+          throw new Error('User object not available');
+        }
+        
+        const userId = user.id || '';
+        console.log('User ID for redirect:', userId);
+        console.log('Full User object:', JSON.stringify(user, null, 2));
+        
+        // Build redirect URL with userId as first parameter
+        // Always include userId parameter, even if empty (will be empty string)
         const redirectUrl = `orbitxpay://walletscreen?userId=${encodeURIComponent(userId)}&evm=${encodeURIComponent(evmWallet)}&solana=${encodeURIComponent(solanaWallet)}&tron=${encodeURIComponent(tronWallet)}`;
+        console.log('Final Redirect URL:', redirectUrl);
+        
+        // Verify userId is in the URL
+        if (!redirectUrl.includes('userId=')) {
+          console.error('ERROR: userId parameter is missing from redirect URL!');
+        }
+        
         setHasRedirected(true);
         navigate(`/redirect?url=${encodeURIComponent(redirectUrl)}`);
       } catch (err) {
