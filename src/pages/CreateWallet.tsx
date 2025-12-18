@@ -259,7 +259,7 @@ function CreateWallet() {
             <h1 className="app-title">🔐 Create Your Self-Custodial Wallet</h1>
             <p className="app-subtitle">
               Secure Web3 Authentication with Passkeys and generate your EVM +
-              Solana self-custodial wallets
+              Solana + Tron self-custodial wallets
             </p>
             {error && (
               <div className="error-message" role="alert">
