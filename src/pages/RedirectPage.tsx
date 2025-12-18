@@ -6,16 +6,64 @@ const REDIRECT_DELAY_MS = 3000;
 
 function RedirectPage() {
   const [searchParams] = useSearchParams();
-  const redirectUrl = searchParams.get('url') || 'orbitxpay://walletscreen';
+  const encodedUrl = searchParams.get('url') || 'orbitxpay://walletscreen';
+  
+  // React Router's searchParams.get() automatically decodes the value once
+  // So encodedUrl should already be decoded
+  let redirectUrl = encodedUrl;
+  
+  // Double-check: if it looks like it's still encoded (contains %), try decoding again
+  if (encodedUrl.includes('%')) {
+    try {
+      const decoded = decodeURIComponent(encodedUrl);
+      redirectUrl = decoded;
+      console.log('RedirectPage - Double-decoded URL');
+    } catch (e) {
+      console.warn('RedirectPage - Failed to double-decode, using as-is:', e);
+    }
+  }
+  
+  console.log('RedirectPage - Raw URL from params:', encodedUrl);
+  console.log('RedirectPage - Final redirect URL:', redirectUrl);
+  console.log('RedirectPage - URL includes userId:', redirectUrl.includes('userId='));
+  console.log('RedirectPage - URL length:', redirectUrl.length);
+  
+  // Extract and verify userId is present
+  const userIdMatch = redirectUrl.match(/[?&]userId=([^&]*)/);
+  if (userIdMatch) {
+    console.log('RedirectPage - Found userId in URL:', decodeURIComponent(userIdMatch[1]));
+  } else {
+    console.error('RedirectPage - ERROR: userId parameter NOT found in URL!');
+    console.error('RedirectPage - Full URL:', redirectUrl);
+  }
 
   useEffect(() => {
+    // Don't redirect if we're using the fallback URL (no userId means it's the default)
+    if (redirectUrl === 'orbitxpay://walletscreen' || !redirectUrl.includes('userId=')) {
+      console.error('RedirectPage - ERROR: Invalid redirect URL or missing userId!');
+      console.error('RedirectPage - URL:', redirectUrl);
+      return;
+    }
+    
     const timer = setTimeout(() => {
       try {
-        window.location.href = redirectUrl;
+        console.log('RedirectPage - About to redirect to:', redirectUrl);
+        console.log('RedirectPage - URL parameter count:', (redirectUrl.match(/[?&]/g) || []).length);
+        
+        // Final verification that userId is still present
+        if (!redirectUrl.includes('userId=')) {
+          console.error('ERROR: userId is missing from redirect URL before redirect!');
+          console.error('Full URL:', redirectUrl);
+          return; // Don't redirect if userId is missing
+        }
+        
+        // Use window.location.replace for more reliable redirects (doesn't add to history)
+        console.log('RedirectPage - Executing redirect...');
+        window.location.replace(redirectUrl);
       } catch (err) {
         console.error('Redirect error:', err);
-        // Fallback: try to redirect to app
-        window.location.href = 'orbitxpay://walletscreen';
+        // Don't use fallback - if redirect fails, log error but don't redirect without userId
+        console.error('RedirectPage - Failed to redirect, not using fallback to preserve userId');
       }
     }, REDIRECT_DELAY_MS);
 

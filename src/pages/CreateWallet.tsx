@@ -145,18 +145,33 @@ function CreateWallet() {
           throw new Error('User object not available');
         }
         
-        const userId = user.id || '';
+        // Try different possible properties for user ID
+        // Privy user object typically has 'id' property
+        const userId = String(user.id || user.wallet?.id || '').trim();
         console.log('User ID for redirect:', userId);
+        console.log('User ID type:', typeof userId);
+        console.log('User ID length:', userId.length);
         console.log('Full User object:', JSON.stringify(user, null, 2));
+        console.log('User.id:', user.id);
+        console.log('User.wallet?.id:', user.wallet?.id);
         
-        // Build redirect URL with userId as first parameter
-        // Always include userId parameter, even if empty (will be empty string)
-        const redirectUrl = `orbitxpay://walletscreen?userId=${encodeURIComponent(userId)}&evm=${encodeURIComponent(evmWallet)}&solana=${encodeURIComponent(solanaWallet)}&tron=${encodeURIComponent(tronWallet)}`;
+        // Build URL using URLSearchParams to ensure proper encoding and parameter inclusion
+        const params = new URLSearchParams();
+        // Always include userId parameter - even if empty, it will be included as empty string
+        // This ensures the parameter is always present in the URL
+        params.set('userId', userId);
+        params.set('evm', evmWallet);
+        params.set('solana', solanaWallet);
+        params.set('tron', tronWallet);
+        
+        const redirectUrl = `orbitxpay://walletscreen?${params.toString()}`;
         console.log('Final Redirect URL:', redirectUrl);
+        console.log('Redirect URL includes userId:', redirectUrl.includes('userId='));
         
         // Verify userId is in the URL
         if (!redirectUrl.includes('userId=')) {
           console.error('ERROR: userId parameter is missing from redirect URL!');
+          throw new Error('Failed to include userId in redirect URL');
         }
         
         setHasRedirected(true);
