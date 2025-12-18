@@ -166,8 +166,12 @@ function CreateWallet() {
         params.set('solana', solanaWallet);
         params.set('tron', tronWallet);
         params.set('userId', userId); // Keep as separate parameter too for backward compatibility
+        params.set('uid', userId); // Also add shorter parameter name as additional fallback
         
-        const redirectUrl = `orbitxpay://walletscreen?${params.toString()}`;
+        // Also encode userId in the URL path as another fallback method
+        // Format: orbitxpay://walletscreen/{userId}?evm=...&solana=...&tron=...
+        const userIdPath = encodeURIComponent(userId);
+        const redirectUrl = `orbitxpay://walletscreen/${userIdPath}?${params.toString()}`;
         console.log('Final Redirect URL:', redirectUrl);
         console.log('Redirect URL includes userId:', redirectUrl.includes('userId='));
         

@@ -118,59 +118,132 @@ function PrivyWallet() {
           console.log('All URL parameters:', JSON.stringify(allParams, null, 2));
           console.log('Parameter keys:', Object.keys(allParams));
 
-          // Extract privyUserId from the URL (try both methods)
+          // Extract privyUserId from the URL (try multiple methods)
+          // Method 1: Try query parameter 'userId'
           let privyUserId = getQueryParam(url, 'userId');
+          console.log('Method 1 - userId from query param:', privyUserId);
+          
+          // Method 2: Try shorter parameter 'uid'
+          if (!privyUserId) {
+            privyUserId = getQueryParam(url, 'uid');
+            console.log('Method 2 - uid from query param:', privyUserId);
+          }
+          
+          // Method 3: Try parsed params object
           if (!privyUserId && allParams.userId) {
             privyUserId = allParams.userId;
-            console.log('Extracted userId from parsed params:', privyUserId);
+            console.log('Method 3 - userId from parsed params:', privyUserId);
+          }
+          
+          // Method 4: Try parsed params 'uid'
+          if (!privyUserId && allParams.uid) {
+            privyUserId = allParams.uid;
+            console.log('Method 4 - uid from parsed params:', privyUserId);
+          }
+          
+          // Method 5: Extract from URL path (orbitxpay://walletscreen/{userId}?...)
+          if (!privyUserId) {
+            try {
+              const pathMatch = url.match(/orbitxpay:\/\/walletscreen\/([^/?]+)/);
+              if (pathMatch && pathMatch[1]) {
+                privyUserId = decodeURIComponent(pathMatch[1]);
+                console.log('Method 5 - userId from URL path:', privyUserId);
+              }
+            } catch (pathError) {
+              console.log('Error extracting userId from path:', pathError);
+            }
           }
           
           // FALLBACK: If userId is not in query params (InAppBrowser limitation),
           // extract it from wallet JSON objects where we encoded it
           if (!privyUserId) {
             console.log('userId not found in query params, trying to extract from wallet objects...');
+            console.log('Available params:', Object.keys(allParams));
+            
+            // Helper function to safely parse JSON from URL-encoded string
+            const parseWalletObject = (encodedJson: string, walletType: string): any => {
+              try {
+                // The JSON is already URL-decoded by parseUrlParams, but might need another decode
+                let decoded = encodedJson;
+                try {
+                  decoded = decodeURIComponent(encodedJson);
+                } catch (e) {
+                  // Already decoded, use as-is
+                  decoded = encodedJson;
+                }
+                console.log(`${walletType} wallet string (first 100 chars):`, decoded.substring(0, 100));
+                const parsed = JSON.parse(decoded);
+                console.log(`${walletType} wallet parsed successfully:`, Object.keys(parsed));
+                return parsed;
+              } catch (parseError) {
+                console.error(`Error parsing ${walletType} wallet object:`, parseError);
+                console.error(`Raw ${walletType} string:`, encodedJson);
+                return null;
+              }
+            };
+            
             try {
               // Try to extract from evm wallet object
               if (allParams.evm) {
-                const evmWallet = JSON.parse(allParams.evm);
-                if (evmWallet.userId) {
+                console.log('Attempting to parse evm wallet...');
+                const evmWallet = parseWalletObject(allParams.evm, 'evm');
+                if (evmWallet && evmWallet.userId) {
                   privyUserId = evmWallet.userId;
-                  console.log('Extracted userId from evm wallet object:', privyUserId);
+                  console.log('✅ Extracted userId from evm wallet object:', privyUserId);
+                } else {
+                  console.log('evm wallet parsed but no userId found. Keys:', evmWallet ? Object.keys(evmWallet) : 'null');
                 }
+              } else {
+                console.log('evm parameter not found in URL');
               }
               
               // If still not found, try solana wallet object
               if (!privyUserId && allParams.solana) {
-                const solanaWallet = JSON.parse(allParams.solana);
-                if (solanaWallet.userId) {
+                console.log('Attempting to parse solana wallet...');
+                const solanaWallet = parseWalletObject(allParams.solana, 'solana');
+                if (solanaWallet && solanaWallet.userId) {
                   privyUserId = solanaWallet.userId;
-                  console.log('Extracted userId from solana wallet object:', privyUserId);
+                  console.log('✅ Extracted userId from solana wallet object:', privyUserId);
+                } else {
+                  console.log('solana wallet parsed but no userId found. Keys:', solanaWallet ? Object.keys(solanaWallet) : 'null');
                 }
+              } else if (!allParams.solana) {
+                console.log('solana parameter not found in URL');
               }
               
               // If still not found, try tron wallet object
               if (!privyUserId && allParams.tron) {
-                const tronWallet = JSON.parse(allParams.tron);
-                if (tronWallet.userId) {
+                console.log('Attempting to parse tron wallet...');
+                const tronWallet = parseWalletObject(allParams.tron, 'tron');
+                if (tronWallet && tronWallet.userId) {
                   privyUserId = tronWallet.userId;
-                  console.log('Extracted userId from tron wallet object:', privyUserId);
+                  console.log('✅ Extracted userId from tron wallet object:', privyUserId);
+                } else {
+                  console.log('tron wallet parsed but no userId found. Keys:', tronWallet ? Object.keys(tronWallet) : 'null');
                 }
+              } else if (!allParams.tron) {
+                console.log('tron parameter not found in URL');
               }
             } catch (parseError) {
               console.error('Error parsing wallet objects to extract userId:', parseError);
             }
           }
           
+          console.log('=== EXTRACTION SUMMARY ===');
           console.log('Final extracted privyUserId:', privyUserId);
+          console.log('URL received:', url);
+          console.log('All available parameters:', Object.keys(allParams));
           console.log('=== URL PROCESSING END ===');
 
           if (!privyUserId) {
-            console.error('ERROR: userId not found in URL or wallet objects!');
+            console.error('❌ ERROR: userId not found using ANY method!');
             console.error('Full URL was:', url);
-            console.error('All parameters:', allParams);
-            console.error('This should not happen - userId is encoded in wallet objects');
+            console.error('All parameters:', JSON.stringify(allParams, null, 2));
+            console.error('Tried methods: query param userId, query param uid, parsed params, URL path, wallet objects');
+            console.error('This should not happen - userId is encoded in multiple places');
           } else {
-            console.log('✅ Successfully extracted userId:', privyUserId);
+            console.log('✅ SUCCESS: Successfully extracted userId:', privyUserId);
+            console.log('✅ userId length:', privyUserId.length);
           }
 
           // Pass the full URL and privyUserId to Wallet screen so it can parse JSON-encoded parameters
