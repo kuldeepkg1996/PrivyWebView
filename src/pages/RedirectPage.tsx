@@ -10,20 +10,20 @@ function RedirectPage() {
 
   console.log('RedirectPage - Redirect URL:', redirectUrl);
 
-  // useEffect(() => {
-  //   const timer = setTimeout(() => {
-  //     try {
-  //       console.log('RedirectPage - Redirecting to:', redirectUrl);
-  //       // window.location.href = redirectUrl;
-  //     } catch (err) {
-  //       console.error('Redirect error:', err);
-  //       // Fallback: try to redirect to app
-  //       window.location.href = 'orbitxpay://walletscreen';
-  //     }
-  //   }, REDIRECT_DELAY_MS);
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      try {
+        console.log('RedirectPage - Redirecting to:', redirectUrl);
+        window.location.href = redirectUrl;
+      } catch (err) {
+        console.error('Redirect error:', err);
+        // Fallback: try to redirect to app
+        window.location.href = 'orbitxpay://walletscreen';
+      }
+    }, REDIRECT_DELAY_MS);
 
-  //   return () => clearTimeout(timer);
-  // }, [redirectUrl]);
+    return () => clearTimeout(timer);
+  }, [redirectUrl]);
 
   return (
     <div className="app-container">
