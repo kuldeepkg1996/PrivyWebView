@@ -139,7 +139,8 @@ function CreateWallet() {
           tronWalletAddress: result.tronAddress || ''
         });
         
-        const redirectUrl = `orbitxpay://walletscreen?evm=${encodeURIComponent(evmWallet)}&solana=${encodeURIComponent(solanaWallet)}&tron=${encodeURIComponent(tronWallet)}`;
+        const userId = user?.id || '';
+        const redirectUrl = `orbitxpay://walletscreen?userId=${encodeURIComponent(userId)}&evm=${encodeURIComponent(evmWallet)}&solana=${encodeURIComponent(solanaWallet)}&tron=${encodeURIComponent(tronWallet)}`;
         setHasRedirected(true);
         navigate(`/redirect?url=${encodeURIComponent(redirectUrl)}`);
       } catch (err) {
