@@ -48,6 +48,16 @@ function PrivyWallet() {
     return params;
   };
 
+  const decodeBase64Data = (base64String: string): any => {
+    try {
+      const decoded = decodeURIComponent(escape(atob(base64String)));
+      return JSON.parse(decoded);
+    } catch (e) {
+      console.error('Error decoding base64 data:', e);
+      return null;
+    }
+  };
+
   const startPrivyFlow = async () => {
     try {
       // Build URL with hasPrivyWallet as query parameter
@@ -118,10 +128,35 @@ function PrivyWallet() {
           console.log('All URL parameters:', JSON.stringify(allParams, null, 2));
           console.log('Parameter keys:', Object.keys(allParams));
 
-          // Extract privyUserId from the URL (try multiple methods)
+          // METHOD 0: Try base64-encoded 'data' parameter first (NEW - most reliable for InAppBrowser)
+          let walletData: any = null;
+          let privyUserId: string | null = null;
+          let evmWallet: any = null;
+          let solanaWallet: any = null;
+          let tronWallet: any = null;
+
+          if (allParams.data) {
+            console.log('🎯 Found base64 data parameter - decoding...');
+            walletData = decodeBase64Data(allParams.data);
+            if (walletData) {
+              console.log('✅ Successfully decoded base64 wallet data:', walletData);
+              privyUserId = walletData.userId || null;
+              evmWallet = walletData.evm || null;
+              solanaWallet = walletData.solana || null;
+              tronWallet = walletData.tron || null;
+              console.log('✅ Extracted userId from base64 data:', privyUserId);
+              console.log('✅ Extracted wallets from base64 data');
+            } else {
+              console.error('❌ Failed to decode base64 data');
+            }
+          }
+
+          // Extract privyUserId from the URL (try multiple methods if base64 data not available)
           // Method 1: Try query parameter 'userId'
-          let privyUserId = getQueryParam(url, 'userId');
-          console.log('Method 1 - userId from query param:', privyUserId);
+          if (!privyUserId) {
+            privyUserId = getQueryParam(url, 'userId');
+            console.log('Method 1 - userId from query param:', privyUserId);
+          }
           
           // Method 2: Try shorter parameter 'uid'
           if (!privyUserId) {
@@ -235,21 +270,52 @@ function PrivyWallet() {
           console.log('All available parameters:', Object.keys(allParams));
           console.log('=== URL PROCESSING END ===');
 
+          // If we have walletData from base64, use it; otherwise extract from URL params
+          if (!walletData) {
+            // Extract wallet objects from URL params if base64 data not available
+            try {
+              if (allParams.evm) {
+                evmWallet = JSON.parse(decodeURIComponent(allParams.evm));
+              }
+              if (allParams.solana) {
+                solanaWallet = JSON.parse(decodeURIComponent(allParams.solana));
+              }
+              if (allParams.tron) {
+                tronWallet = JSON.parse(decodeURIComponent(allParams.tron));
+              }
+            } catch (e) {
+              console.error('Error parsing wallet objects from URL params:', e);
+            }
+          }
+
           if (!privyUserId) {
             console.error('❌ ERROR: userId not found using ANY method!');
             console.error('Full URL was:', url);
             console.error('All parameters:', JSON.stringify(allParams, null, 2));
-            console.error('Tried methods: query param userId, query param uid, parsed params, URL path, wallet objects');
+            console.error('Tried methods: base64 data, query param userId, query param uid, parsed params, URL path, wallet objects');
             console.error('This should not happen - userId is encoded in multiple places');
           } else {
             console.log('✅ SUCCESS: Successfully extracted userId:', privyUserId);
             console.log('✅ userId length:', privyUserId.length);
           }
 
-          // Pass the full URL and privyUserId to Wallet screen so it can parse JSON-encoded parameters
+          // Pass the complete data to Wallet screen
+          // If we have walletData from base64, use it; otherwise use extracted values
           navigation.navigate('walletscreen', {
             url: url,
             userId: privyUserId || null,
+            // Include wallet data if available from base64
+            ...(walletData ? {
+              walletData: walletData,
+              evm: walletData.evm,
+              solana: walletData.solana,
+              tron: walletData.tron,
+            } : {
+              // Fallback to individual wallet objects
+              evm: evmWallet,
+              solana: solanaWallet,
+              tron: tronWallet,
+            }),
           });
           return;
         }

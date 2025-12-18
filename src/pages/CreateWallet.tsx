@@ -16,6 +16,7 @@ import { useCreateWallet as useOtherWallets } from '@privy-io/react-auth/extende
 
 import '../styles/App.css';
 import { ensureAllWallets } from '../utils/walletManager';
+import { sendCompleteWalletDataToNative } from '../utils/nativeCommunication';
 
 const INIT_TIMEOUT_MS = 10000;
 
@@ -141,48 +142,27 @@ function CreateWallet() {
         console.log('User.id:', user.id);
         console.log('User.wallet?.id:', user.wallet?.id);
         
-        // ENCODE userId INSIDE each wallet JSON object to avoid InAppBrowser query parameter limitations
-        // This ensures userId is preserved even if InAppBrowser strips query parameters
-        const evmWallet = JSON.stringify({
-          evmWalletId: result.evmWalletId || '',
-          evmWalletAddress: result.evmAddress || '',
-          userId: userId // Include userId in wallet object
-        });
-        const solanaWallet = JSON.stringify({
-          solanaWalletId: result.solanaWalletId || '',
-          solanaWalletAddress: result.solanaAddress || '',
-          userId: userId // Include userId in wallet object
-        });
-        const tronWallet = JSON.stringify({
-          tronWalletId: result.tronWalletId || '',
-          tronWalletAddress: result.tronAddress || '',
-          userId: userId // Include userId in wallet object
-        });
-        
-        // Build URL using URLSearchParams to ensure proper encoding and parameter inclusion
-        const params = new URLSearchParams();
-        // Still include userId as separate parameter as fallback, but it's also in each wallet object
-        params.set('evm', evmWallet);
-        params.set('solana', solanaWallet);
-        params.set('tron', tronWallet);
-        params.set('userId', userId); // Keep as separate parameter too for backward compatibility
-        params.set('uid', userId); // Also add shorter parameter name as additional fallback
-        
-        // Also encode userId in the URL path as another fallback method
-        // Format: orbitxpay://walletscreen/{userId}?evm=...&solana=...&tron=...
-        const userIdPath = encodeURIComponent(userId);
-        const redirectUrl = `orbitxpay://walletscreen/${userIdPath}?${params.toString()}`;
-        console.log('Final Redirect URL:', redirectUrl);
-        console.log('Redirect URL includes userId:', redirectUrl.includes('userId='));
-        
-        // Verify userId is in the URL
-        if (!redirectUrl.includes('userId=')) {
-          console.error('ERROR: userId parameter is missing from redirect URL!');
-          throw new Error('Failed to include userId in redirect URL');
-        }
+        // Use the new utility function that sends data via multiple methods:
+        // 1. postMessage (for WebView - most reliable)
+        // 2. Base64-encoded single parameter (best for InAppBrowser)
+        // 3. Fallback deep link with all parameters
+        console.log('Sending wallet data to native app...');
+        sendCompleteWalletDataToNative(
+          result.evmAddress || '',
+          result.solanaAddress || '',
+          result.tronAddress || '',
+          result.evmWalletId || '',
+          result.solanaWalletId || '',
+          result.tronWalletId || '',
+          userId
+        );
         
         setHasRedirected(true);
-        navigate(`/redirect?url=${encodeURIComponent(redirectUrl)}`);
+        
+        // Navigate to redirect page which will handle the deep link
+        // The sendCompleteWalletDataToNative function already triggers the redirect,
+        // but we keep this for the redirect page UI
+        navigate('/redirect');
       } catch (err) {
         const errorMessage = err instanceof Error ? err.message : 'Failed to create wallet(s)';
         setError(errorMessage);

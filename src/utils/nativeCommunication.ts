@@ -129,3 +129,102 @@ export const sendSignMessageResultToNative = (
   }
 };
 
+/**
+ * Send complete wallet data including userId to React Native app
+ * Uses multiple methods for maximum compatibility:
+ * 1. Base64-encoded single parameter (best for InAppBrowser)
+ * 2. postMessage (for WebView)
+ * 3. Deep link with all parameters (fallback)
+ */
+export const sendCompleteWalletDataToNative = (
+  evmAddress: string,
+  solanaAddress: string,
+  tronAddress: string,
+  evmWalletId: string,
+  solanaWalletId: string,
+  tronWalletId: string,
+  userId: string
+): void => {
+  // Prepare all wallet data in a single object
+  const walletData = {
+    userId: userId,
+    evm: {
+      evmWalletId: evmWalletId || '',
+      evmWalletAddress: evmAddress || ''
+    },
+    solana: {
+      solanaWalletId: solanaWalletId || '',
+      solanaWalletAddress: solanaAddress || ''
+    },
+    tron: {
+      tronWalletId: tronWalletId || '',
+      tronWalletAddress: tronAddress || ''
+    },
+    timestamp: Date.now() // Add timestamp for validation
+  };
+
+  console.log('Sending complete wallet data:', walletData);
+
+  // Method 1: Try postMessage first (for WebView - most reliable)
+  try {
+    if (window.ReactNativeWebView) {
+      window.ReactNativeWebView.postMessage(
+        JSON.stringify({
+          type: 'WALLET_DATA_COMPLETE',
+          ...walletData
+        })
+      );
+      console.log('✅ Sent wallet data via postMessage');
+    }
+  } catch (e) {
+    console.error('Error sending via postMessage:', e);
+  }
+
+  // Method 2: Base64-encoded single parameter (best for InAppBrowser)
+  try {
+    const jsonData = JSON.stringify(walletData);
+    const base64Data = btoa(unescape(encodeURIComponent(jsonData)));
+    const deepLinkUrl = `orbitxpay://walletscreen?data=${encodeURIComponent(base64Data)}`;
+    
+    console.log('Base64 encoded data length:', base64Data.length);
+    console.log('Deep link URL length:', deepLinkUrl.length);
+    
+    window.location.href = deepLinkUrl;
+    console.log('✅ Sent wallet data via base64 deep link');
+  } catch (e) {
+    console.error('Error sending via base64 deep link:', e);
+    
+    // Method 3: Fallback to original method with all parameters
+    try {
+      const evmWallet = JSON.stringify({
+        evmWalletId: evmWalletId || '',
+        evmWalletAddress: evmAddress || '',
+        userId: userId
+      });
+      const solanaWallet = JSON.stringify({
+        solanaWalletId: solanaWalletId || '',
+        solanaWalletAddress: solanaAddress || '',
+        userId: userId
+      });
+      const tronWallet = JSON.stringify({
+        tronWalletId: tronWalletId || '',
+        tronWalletAddress: tronAddress || '',
+        userId: userId
+      });
+
+      const params = new URLSearchParams();
+      params.set('evm', evmWallet);
+      params.set('solana', solanaWallet);
+      params.set('tron', tronWallet);
+      params.set('userId', userId);
+      params.set('uid', userId);
+
+      const fallbackUrl = `orbitxpay://walletscreen/${encodeURIComponent(userId)}?${params.toString()}`;
+      window.location.href = fallbackUrl;
+      console.log('✅ Sent wallet data via fallback deep link');
+    } catch (fallbackError) {
+      console.error('Error sending via fallback deep link:', fallbackError);
+    }
+  }
+};
+
