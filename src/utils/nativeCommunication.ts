@@ -180,21 +180,44 @@ export const sendCompleteWalletDataToNative = (
     console.error('Error sending via postMessage:', e);
   }
 
-  // Method 2: Base64-encoded single parameter (best for InAppBrowser)
+  // Method 2: Store in sessionStorage as backup (React Native can inject JS to read this)
+  try {
+    sessionStorage.setItem('privy_wallet_data', JSON.stringify(walletData));
+    sessionStorage.setItem('privy_wallet_data_timestamp', Date.now().toString());
+    console.log('✅ Stored wallet data in sessionStorage');
+  } catch (e) {
+    console.warn('Could not store in sessionStorage:', e);
+  }
+
+  // Method 3: Base64-encoded single parameter (best for InAppBrowser)
+  // Use short parameter name 'd' to avoid stripping
   try {
     const jsonData = JSON.stringify(walletData);
+    // Use proper base64 encoding
     const base64Data = btoa(unescape(encodeURIComponent(jsonData)));
-    const deepLinkUrl = `orbitxpay://walletscreen?data=${encodeURIComponent(base64Data)}`;
+    
+    // Try multiple URL formats to maximize compatibility
+    const urlFormats = [
+      `orbitxpay://walletscreen?d=${base64Data}`, // Shortest parameter name
+      `orbitxpay://walletscreen?data=${base64Data}`, // Full parameter name
+      `orbitxpay://walletscreen/${encodeURIComponent(userId)}?d=${base64Data}`, // With userId in path
+    ];
     
     console.log('Base64 encoded data length:', base64Data.length);
-    console.log('Deep link URL length:', deepLinkUrl.length);
+    console.log('Base64 data preview:', base64Data.substring(0, 50) + '...');
+    console.log('Trying URL formats:', urlFormats.map((url, i) => `Format ${i + 1}: ${url.substring(0, 100)}...`));
+    
+    // Try the shortest format first (most likely to work)
+    const deepLinkUrl = urlFormats[0];
+    console.log('Using URL format:', deepLinkUrl.substring(0, 150));
+    console.log('Full URL length:', deepLinkUrl.length);
     
     window.location.href = deepLinkUrl;
     console.log('✅ Sent wallet data via base64 deep link');
   } catch (e) {
     console.error('Error sending via base64 deep link:', e);
     
-    // Method 3: Fallback to original method with all parameters
+    // Method 4: Fallback to original method with all parameters
     try {
       const evmWallet = JSON.stringify({
         evmWalletId: evmWalletId || '',

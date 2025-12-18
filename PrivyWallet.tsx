@@ -50,11 +50,38 @@ function PrivyWallet() {
 
   const decodeBase64Data = (base64String: string): any => {
     try {
-      const decoded = decodeURIComponent(escape(atob(base64String)));
-      return JSON.parse(decoded);
-    } catch (e) {
-      console.error('Error decoding base64 data:', e);
-      return null;
+      console.log('Attempting to decode base64 string...');
+      console.log('Input length:', base64String.length);
+      console.log('Input preview:', base64String.substring(0, 50) + '...');
+      
+      // Decode base64
+      const base64Decoded = atob(base64String);
+      console.log('Base64 decoded length:', base64Decoded.length);
+      
+      // Decode URI component
+      const uriDecoded = decodeURIComponent(escape(base64Decoded));
+      console.log('URI decoded length:', uriDecoded.length);
+      console.log('URI decoded preview:', uriDecoded.substring(0, 100) + '...');
+      
+      // Parse JSON
+      const parsed = JSON.parse(uriDecoded);
+      console.log('✅ Successfully parsed JSON');
+      return parsed;
+    } catch (e: any) {
+      console.error('❌ Error decoding base64 data:', e);
+      console.error('Error message:', e.message);
+      console.error('Error stack:', e.stack);
+      
+      // Try alternative decoding method
+      try {
+        console.log('Trying alternative decoding method...');
+        const alternativeDecoded = JSON.parse(atob(base64String));
+        console.log('✅ Alternative method worked!');
+        return alternativeDecoded;
+      } catch (altError) {
+        console.error('❌ Alternative method also failed:', altError);
+        return null;
+      }
     }
   };
 
@@ -125,21 +152,43 @@ function PrivyWallet() {
 
           // Parse all URL parameters for debugging
           const allParams = parseUrlParams(url);
-          console.log('All URL parameters:', JSON.stringify(allParams, null, 2));
+          console.log('=== URL PARAMETER ANALYSIS ===');
+          console.log('Full URL received:', url);
+          console.log('URL length:', url.length);
+          console.log('Number of parameters:', Object.keys(allParams).length);
           console.log('Parameter keys:', Object.keys(allParams));
+          console.log('All parameters:', JSON.stringify(allParams, null, 2));
+          console.log('Has "d" parameter:', !!allParams.d);
+          console.log('Has "data" parameter:', !!allParams.data);
+          console.log('Has "userId" parameter:', !!allParams.userId);
+          console.log('Has "evm" parameter:', !!allParams.evm);
+          console.log('Has "solana" parameter:', !!allParams.solana);
+          console.log('Has "tron" parameter:', !!allParams.tron);
+          if (allParams.d) {
+            console.log('"d" parameter length:', allParams.d.length);
+            console.log('"d" parameter preview:', allParams.d.substring(0, 100) + '...');
+          }
+          if (allParams.data) {
+            console.log('"data" parameter length:', allParams.data.length);
+            console.log('"data" parameter preview:', allParams.data.substring(0, 100) + '...');
+          }
+          console.log('=== END PARAMETER ANALYSIS ===');
 
-          // METHOD 0: Try base64-encoded 'data' parameter first (NEW - most reliable for InAppBrowser)
+          // METHOD 0: Try base64-encoded parameters first (NEW - most reliable for InAppBrowser)
           let walletData: any = null;
           let privyUserId: string | null = null;
           let evmWallet: any = null;
           let solanaWallet: any = null;
           let tronWallet: any = null;
 
-          if (allParams.data) {
-            console.log('🎯 Found base64 data parameter - decoding...');
-            walletData = decodeBase64Data(allParams.data);
+          // Try short parameter name 'd' first (most likely to be preserved)
+          if (allParams.d) {
+            console.log('🎯 Found base64 data parameter "d" - decoding...');
+            console.log('Base64 string length:', allParams.d.length);
+            console.log('Base64 string preview:', allParams.d.substring(0, 50) + '...');
+            walletData = decodeBase64Data(allParams.d);
             if (walletData) {
-              console.log('✅ Successfully decoded base64 wallet data:', walletData);
+              console.log('✅ Successfully decoded base64 wallet data from "d" parameter:', walletData);
               privyUserId = walletData.userId || null;
               evmWallet = walletData.evm || null;
               solanaWallet = walletData.solana || null;
@@ -147,8 +196,29 @@ function PrivyWallet() {
               console.log('✅ Extracted userId from base64 data:', privyUserId);
               console.log('✅ Extracted wallets from base64 data');
             } else {
-              console.error('❌ Failed to decode base64 data');
+              console.error('❌ Failed to decode base64 data from "d" parameter');
             }
+          }
+          
+          // Try full parameter name 'data' as fallback
+          if (!walletData && allParams.data) {
+            console.log('🎯 Found base64 data parameter "data" - decoding...');
+            console.log('Base64 string length:', allParams.data.length);
+            walletData = decodeBase64Data(allParams.data);
+            if (walletData) {
+              console.log('✅ Successfully decoded base64 wallet data from "data" parameter:', walletData);
+              privyUserId = walletData.userId || null;
+              evmWallet = walletData.evm || null;
+              solanaWallet = walletData.solana || null;
+              tronWallet = walletData.tron || null;
+              console.log('✅ Extracted userId from base64 data:', privyUserId);
+            } else {
+              console.error('❌ Failed to decode base64 data from "data" parameter');
+            }
+          }
+          
+          if (!walletData) {
+            console.log('⚠️ No base64 data parameter found. Available params:', Object.keys(allParams));
           }
 
           // Extract privyUserId from the URL (try multiple methods if base64 data not available)
